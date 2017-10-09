@@ -3,7 +3,8 @@
 
 # build files
 build/
-cmake-build-debug/
+Debug/
+Release/
 
 # editor config
 .vscode/

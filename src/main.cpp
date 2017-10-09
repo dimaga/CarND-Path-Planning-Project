@@ -9,37 +9,39 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 
-using namespace std;
-
 // for convenience
 using json = nlohmann::json;
 
 // For converting back and forth between radians and degrees.
-constexpr double pi() { return M_PI; }
-double deg2rad(double x) { return x * pi() / 180; }
-double rad2deg(double x) { return x * 180 / pi(); }
+double deg2rad(double x) { return x * M_PI / 180; }
+double rad2deg(double x) { return x * 180 / M_PI; }
+
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
-string hasData(string s) {
+std::string hasData(const std::string& s) {
   auto found_null = s.find("null");
   auto b1 = s.find_first_of("[");
   auto b2 = s.find_first_of("}");
-  if (found_null != string::npos) {
+  if (found_null != std::string::npos) {
     return "";
-  } else if (b1 != string::npos && b2 != string::npos) {
+  } else if (b1 != std::string::npos && b2 != std::string::npos) {
     return s.substr(b1, b2 - b1 + 2);
   }
   return "";
 }
 
-double distance(double x1, double y1, double x2, double y2)
-{
+
+double distance(double x1, double y1, double x2, double y2) {
   return sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
 }
-int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y)
-{
+
+
+int ClosestWaypoint(double x,
+                    double y,
+                    const std::vector<double> &maps_x,
+                    const std::vector<double> &maps_y){
 
   double closestLen = 100000; //large number
   int closestWaypoint = 0;
@@ -61,21 +63,23 @@ int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vect
 
 }
 
-int NextWaypoint(double x, double y, double theta, const vector<double> &maps_x,
-                 const vector<double> &maps_y)
-{
+
+int NextWaypoint(double x,
+                 double y,
+                 double theta,
+                 const std::vector<double> &maps_x,
+                 const std::vector<double> &maps_y) {
 
   int closestWaypoint = ClosestWaypoint(x,y,maps_x,maps_y);
 
   double map_x = maps_x[closestWaypoint];
   double map_y = maps_y[closestWaypoint];
 
-  double heading = atan2( (map_y-y),(map_x-x) );
+  double heading = std::atan2( (map_y-y),(map_x-x) );
 
-  double angle = abs(theta-heading);
+  double angle = std::abs(theta - heading);
 
-  if(angle > pi()/4)
-  {
+  if(angle > M_PI / 4) {
     closestWaypoint++;
   }
 
@@ -84,18 +88,16 @@ int NextWaypoint(double x, double y, double theta, const vector<double> &maps_x,
 }
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
-vector<double> getFrenet(double x,
-                         double y,
-                         double theta,
-                         const vector<double> &maps_x,
-                         const vector<double> &maps_y)
-{
+std::vector<double> getFrenet(double x,
+                              double y,
+                              double theta,
+                              const std::vector<double> &maps_x,
+                              const std::vector<double> &maps_y) {
   int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
   int prev_wp;
   prev_wp = next_wp-1;
-  if(next_wp == 0)
-  {
+  if(next_wp == 0) {
     prev_wp  = maps_x.size()-1;
   }
 
@@ -118,8 +120,7 @@ vector<double> getFrenet(double x,
   double centerToPos = distance(center_x,center_y,x_x,x_y);
   double centerToRef = distance(center_x,center_y,proj_x,proj_y);
 
-  if(centerToPos <= centerToRef)
-  {
+  if(centerToPos <= centerToRef) {
     frenet_d *= -1;
   }
 
@@ -137,23 +138,21 @@ vector<double> getFrenet(double x,
 }
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
-vector<double> getXY(double s,
-                     double d,
-                     const vector<double> &maps_s,
-                     const vector<double> &maps_x,
-                     const vector<double> &maps_y)
-{
+std::vector<double> getXY(double s,
+                          double d,
+                          const std::vector<double> &maps_s,
+                          const std::vector<double> &maps_x,
+                          const std::vector<double> &maps_y) {
   int prev_wp = -1;
 
-  while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
-  {
+  while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) )) {
     prev_wp++;
   }
 
   int wp2 = (prev_wp+1)%maps_x.size();
 
-  double heading = atan2((maps_y[wp2]-maps_y[prev_wp]),
-                         (maps_x[wp2]-maps_x[prev_wp]));
+  double heading = std::atan2((maps_y[wp2]-maps_y[prev_wp]),
+                              (maps_x[wp2]-maps_x[prev_wp]));
 
   // the x,y,s along the segment
   double seg_s = (s-maps_s[prev_wp]);
@@ -161,35 +160,36 @@ vector<double> getXY(double s,
   double seg_x = maps_x[prev_wp]+seg_s*cos(heading);
   double seg_y = maps_y[prev_wp]+seg_s*sin(heading);
 
-  double perp_heading = heading-pi()/2;
+  double perp_heading = heading - M_PI/2;
 
-  double x = seg_x + d*cos(perp_heading);
-  double y = seg_y + d*sin(perp_heading);
+  double x = seg_x + d*std::cos(perp_heading);
+  double y = seg_y + d*std::sin(perp_heading);
 
   return {x,y};
 
 }
 
+
 int main() {
   uWS::Hub h;
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
-  vector<double> map_waypoints_x;
-  vector<double> map_waypoints_y;
-  vector<double> map_waypoints_s;
-  vector<double> map_waypoints_dx;
-  vector<double> map_waypoints_dy;
+  std::vector<double> map_waypoints_x;
+  std::vector<double> map_waypoints_y;
+  std::vector<double> map_waypoints_s;
+  std::vector<double> map_waypoints_dx;
+  std::vector<double> map_waypoints_dy;
 
   // Waypoint map to read from
-  string map_file_ = "../data/highway_map.csv";
+  std::string map_file_ = "../data/highway_map.csv";
   // The max s value before wrapping around the track back to 0
   double max_s = 6945.554;
 
-  ifstream in_map_(map_file_.c_str(), ifstream::in);
+  std::ifstream in_map_(map_file_.c_str(), std::ifstream::in);
 
-  string line;
+  std::string line;
   while (getline(in_map_, line)) {
-    istringstream iss(line);
+    std::istringstream iss(line);
     double x;
     double y;
     float s;
@@ -227,7 +227,7 @@ int main() {
       if (s != "") {
         auto j = json::parse(s);
 
-        string event = j[0].get<string>();
+        std::string event = j[0].get<std::string>();
 
         if (event == "telemetry") {
           // j[1] is the data JSON object
@@ -253,8 +253,8 @@ int main() {
 
           json msgJson;
 
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
+          std::vector<double> next_x_vals;
+          std::vector<double> next_y_vals;
 
           double dist_inc = 0.5;
           for(int i = 0; i < 50; i++)
@@ -262,11 +262,11 @@ int main() {
             double next_s = car_s + (i + 1) * dist_inc;
             double next_d = 6.0;
 
-            vector<double> xy = getXY(next_s,
-                                      next_d,
-                                      map_waypoints_s,
-                                      map_waypoints_x,
-                                      map_waypoints_y);
+            std::vector<double> xy = getXY(next_s,
+                                           next_d,
+                                           map_waypoints_s,
+                                           map_waypoints_x,
+                                           map_waypoints_y);
 
             next_x_vals.push_back(xy.at(0));
             next_y_vals.push_back(xy.at(1));
