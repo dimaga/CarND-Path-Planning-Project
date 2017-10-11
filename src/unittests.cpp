@@ -2,6 +2,5 @@
 #include "Catch/catch.hpp"
 
 TEST_CASE("", "") {
-
 }
 
