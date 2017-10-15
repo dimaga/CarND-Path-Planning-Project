@@ -7,12 +7,16 @@ add_definitions(-std=c++11)
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
-set(sources)
+set(sources
+    src/Map.cpp
+    src/Map.h
+    src/Waypoint.h)
 
 set(sources_main
     src/main.cpp)
 
 set(sources_unittests
+    src/MapTests.cpp
     src/unittests.cpp)
 
 set(headers)

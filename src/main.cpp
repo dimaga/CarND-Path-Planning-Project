@@ -89,7 +89,7 @@ std::vector<double> getFrenet(double x,
 
   int prev_wp = next_wp - 1;
   if (0 == next_wp) {
-    prev_wp  = maps_x.size() - 1;
+    prev_wp = maps_x.size() - 1;
   }
 
   const double n_x = maps_x[next_wp]-maps_x[prev_wp];
@@ -195,7 +195,6 @@ int main() {
     map_waypoints_dx.push_back(d_x);
     map_waypoints_dy.push_back(d_y);
   }
-
   h.onMessage([&map_waypoints_x,
                &map_waypoints_y,
                &map_waypoints_s,
@@ -301,7 +300,8 @@ int main() {
     std::cout << "Disconnected" << std::endl;
   });
 
-  int port = 4567;
+  const int port = 4567;
+
   if (h.listen(port)) {
     std::cout << "Listening to port " << port << std::endl;
   } else {
