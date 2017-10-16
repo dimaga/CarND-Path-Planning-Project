@@ -32,7 +32,7 @@ double Map::length() const {
 }
 
 
-std::size_t Map::ClosestWaypoint(const Eigen::Vector2d& pos) {
+std::size_t Map::ClosestWaypoint(const Eigen::Vector2d& pos) const {
   auto closest_dist_sq = std::numeric_limits<double>::max();
   std::size_t closest_waypoint = 0;
 
@@ -47,4 +47,18 @@ std::size_t Map::ClosestWaypoint(const Eigen::Vector2d& pos) {
   }
 
   return closest_waypoint;
+}
+
+
+std::size_t Map::NextWaypoint(const Eigen::Vector2d& pos) const {
+  auto idx = ClosestWaypoint(pos);
+
+  const Waypoint& wp = track_.at(idx);
+  const Eigen::Vector2d to_wp = pos - wp.pos_;
+
+  if (to_wp.dot(wp.dir_) > 0) {
+    idx = (idx + 1) % track_.size();
+  }
+
+  return idx;
 }
