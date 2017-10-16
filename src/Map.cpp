@@ -1,6 +1,7 @@
 #include "Map.h"
 #include <cstdio>
 #include <sstream>
+#include <limits>
 
 Map::Map(std::istream& is) {
   std::string line;
@@ -28,4 +29,22 @@ Map::Map(std::istream& is) {
 
 double Map::length() const {
   return length_;
+}
+
+
+std::size_t Map::ClosestWaypoint(const Eigen::Vector2d& pos) {
+  auto closest_dist_sq = std::numeric_limits<double>::max();
+  std::size_t closest_waypoint = 0;
+
+  for (std::size_t i = 0, size = track_.size(); i < size; ++i) {
+    const Waypoint& wp = track_.at(i);
+
+    const double dist_sq = (wp.pos_ - pos).squaredNorm();
+    if (dist_sq < closest_dist_sq) {
+      closest_dist_sq = dist_sq;
+      closest_waypoint = i;
+    }
+  }
+
+  return closest_waypoint;
 }

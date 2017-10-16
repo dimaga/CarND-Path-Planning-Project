@@ -11,6 +11,8 @@ class Map {
 
   double length() const;
 
+  std::size_t ClosestWaypoint(const Eigen::Vector2d& pos);
+
  private:
   std::vector<Waypoint> track_;
   double length_{0.0};
