@@ -6,7 +6,7 @@
 struct Waypoint {
   Eigen::Vector2d pos_{0, 0};
   double s_{0};
-  Eigen::Vector2d dir_{1, 0};
+  Eigen::Vector2d normal_{1, 0};
 };
 
 #endif  // SRC_WAYPOINT_H_

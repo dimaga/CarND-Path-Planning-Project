@@ -5,28 +5,31 @@
 
 TEST_CASE("Map unit tests", "[map]") {
   std::stringstream s {
-    // x y s d_x d_y
-    "10.0 0.0 0.0 0.0 1.0\n"
-    "10.0 10.0 10 -1.0 0.0\n"
-    "0.0 10.0 20 0.0 -1.0\n"
-    "0.0 0.0 30 1.0 0.0\n"
+    // x y s nx ny
+    "-20.0 0.0 0.0 -0.5547 -0.83205\n"
+    "-5.0 -10.0 18.027756 0.0 -1.0\n"
+    "5.0 -10.0 28.027756 0.5547 -0.83205\n"
+    "20.0 0.0 46.055512 0.5547 0.83205\n"
+    "5.0 10.0 64.083269 0.0 1.0\n"
+    "-5.0 10.0 74.083269 -0.5547 0.83205"
   };
 
   Map map(s);
 
   SECTION("length") {
-    REQUIRE(40 == map.length());
+    REQUIRE(Approx(92.1110255) == map.length());
   }
 
   SECTION("ClosestWaypoint") {
-    REQUIRE(0 == map.ClosestWaypoint({9.0, 1.0}));
-    REQUIRE(3 == map.ClosestWaypoint({-1.0, -0.5}));
+    REQUIRE(1 == map.ClosestWaypoint({-4.0, -11.0}));
+    REQUIRE(4 == map.ClosestWaypoint({6.0, 9.5}));
   }
 
   SECTION("NextWaypoint") {
-    REQUIRE(0 == map.NextWaypoint({1.0, 0.0}));
-    REQUIRE(0 == map.NextWaypoint({7.0, 0.0}));
-    REQUIRE(1 == map.NextWaypoint({10.0, 7.0}));
-    REQUIRE(2 == map.NextWaypoint({9.0, 10.0}));
+    REQUIRE(1 == map.NextWaypoint({-6.0, -10.0}));
+    REQUIRE(2 == map.NextWaypoint({-4.0, -10.0}));
+    REQUIRE(5 == map.NextWaypoint({0.0, 10.0}));
+    REQUIRE(5 == map.NextWaypoint({-4.0, 10.0}));
+    REQUIRE(0 == map.NextWaypoint({-6.0, 9.0}));
   }
 }

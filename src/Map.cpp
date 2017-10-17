@@ -14,8 +14,8 @@ Map::Map(std::istream& is) {
     iss >> wp.pos_.x();
     iss >> wp.pos_.y();
     iss >> wp.s_;
-    iss >> wp.dir_.x();
-    iss >> wp.dir_.y();
+    iss >> wp.normal_.x();
+    iss >> wp.normal_.y();
 
     track_.push_back(wp);
   }
@@ -51,14 +51,19 @@ std::size_t Map::ClosestWaypoint(const Eigen::Vector2d& pos) const {
 
 
 std::size_t Map::NextWaypoint(const Eigen::Vector2d& pos) const {
-  auto idx = ClosestWaypoint(pos);
+  const auto idx = ClosestWaypoint(pos);
+  const auto next_idx = (idx + 1) % track_.size();
 
   const Waypoint& wp = track_.at(idx);
-  const Eigen::Vector2d to_wp = pos - wp.pos_;
+  const Waypoint& next_wp = track_.at(next_idx);
 
-  if (to_wp.dot(wp.dir_) > 0) {
-    idx = (idx + 1) % track_.size();
+  const Eigen::Vector2d to_pos = pos - wp.pos_;
+  const Eigen::Vector2d to_next_wp = next_wp.pos_ - wp.pos_;
+
+  const double dot = to_pos.dot(to_next_wp);
+  if (dot > 0) {
+    return next_idx;
+  } else {
+    return idx;
   }
-
-  return idx;
 }
