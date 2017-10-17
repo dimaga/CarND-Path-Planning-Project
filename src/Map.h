@@ -14,6 +14,8 @@ class Map {
   std::size_t ClosestWaypoint(const Eigen::Vector2d& pos) const;
   std::size_t NextWaypoint(const Eigen::Vector2d& pos) const;
 
+  Eigen::Vector2d ToFrenet(const Eigen::Vector2d& cartesian) const;
+
  private:
   std::vector<Waypoint> track_;
   double length_{0.0};

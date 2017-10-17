@@ -67,3 +67,25 @@ std::size_t Map::NextWaypoint(const Eigen::Vector2d& pos) const {
     return idx;
   }
 }
+
+
+Eigen::Vector2d Map::ToFrenet(const Eigen::Vector2d& cartesian) const {
+  using std::size_t;
+  const size_t next_idx = NextWaypoint(cartesian);
+  const size_t prev_idx = next_idx ? (next_idx - 1) : (track_.size() - 1);
+
+  const auto& next_wp = track_.at(next_idx);
+  const auto& prev_wp = track_.at(prev_idx);
+
+  using Eigen::Vector2d;
+  const Vector2d to_next = next_wp.pos_ - prev_wp.pos_;
+  const Vector2d to_pos = cartesian - prev_wp.pos_;
+
+  // find the projection of x onto n
+  const Vector2d proj = to_next * to_pos.dot(to_next) / to_next.squaredNorm();
+
+  const double frenet_s = prev_wp.s_ + proj.norm();
+  const double frenet_d = to_pos.dot(prev_wp.normal_);
+  return {frenet_s, frenet_d};
+}
+

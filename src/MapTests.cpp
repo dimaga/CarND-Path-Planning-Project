@@ -32,4 +32,20 @@ TEST_CASE("Map unit tests", "[map]") {
     REQUIRE(5 == map.NextWaypoint({-4.0, 10.0}));
     REQUIRE(0 == map.NextWaypoint({-6.0, 9.0}));
   }
+
+  SECTION("ToFrenet()") {
+    using Eigen::Vector2d;
+
+    SECTION("Point 1") {
+      const Vector2d frenet = map.ToFrenet({-5.0, -10.0});
+      REQUIRE(Approx(18.027756) == frenet[0]);
+      REQUIRE(Approx(0.0) == frenet[1]);
+    }
+
+    SECTION("Point 4") {
+      const Vector2d frenet = map.ToFrenet({5.0, 10.0});
+      REQUIRE(Approx(64.083269) == frenet[0]);
+      REQUIRE(Approx(0.0) == frenet[1]);
+    }
+  }
 }
