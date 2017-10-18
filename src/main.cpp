@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "Map.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -33,173 +34,18 @@ std::string hasData(const std::string& s) {
 }
 
 
-double distance(double x1, double y1, double x2, double y2) {
-  return std::sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
-}
-
-
-int ClosestWaypoint(double x,
-                    double y,
-                    const std::vector<double> &maps_x,
-                    const std::vector<double> &maps_y) {
-  double closestLen = 100000;  // Large number
-  int closestWaypoint = 0;
-
-  for (int i = 0; i < maps_x.size(); i++) {
-    double map_x = maps_x[i];
-    double map_y = maps_y[i];
-    double dist = distance(x, y, map_x, map_y);
-    if (dist < closestLen) {
-      closestLen = dist;
-      closestWaypoint = i;
-    }
-  }
-
-  return closestWaypoint;
-}
-
-
-int NextWaypoint(double x,
-                 double y,
-                 double theta,
-                 const std::vector<double> &maps_x,
-                 const std::vector<double> &maps_y) {
-  int closestWaypoint = ClosestWaypoint(x, y, maps_x, maps_y);
-
-  const double map_x = maps_x[closestWaypoint];
-  const double map_y = maps_y[closestWaypoint];
-  const double heading = std::atan2(map_y - y, map_x - x);
-
-  const double angle = std::abs(theta - heading);
-  if (angle > M_PI / 4) {
-    closestWaypoint++;
-  }
-
-  return closestWaypoint;
-}
-
-
-// Transform from Cartesian x,y coordinates to Frenet s,d coordinates
-std::vector<double> getFrenet(double x,
-                              double y,
-                              double theta,
-                              const std::vector<double> &maps_x,
-                              const std::vector<double> &maps_y) {
-  const int next_wp = NextWaypoint(x, y, theta, maps_x, maps_y);
-
-  int prev_wp = next_wp - 1;
-  if (0 == next_wp) {
-    prev_wp = maps_x.size() - 1;
-  }
-
-  const double n_x = maps_x[next_wp]-maps_x[prev_wp];
-  const double n_y = maps_y[next_wp]-maps_y[prev_wp];
-  const double x_x = x - maps_x[prev_wp];
-  const double x_y = y - maps_y[prev_wp];
-
-  // find the projection of x onto n
-  const double proj_norm = (x_x*n_x + x_y*n_y) / (n_x*n_x + n_y*n_y);
-  const double proj_x = proj_norm*n_x;
-  const double proj_y = proj_norm*n_y;
-
-  // See if d value is positive or negative by comparing it to a center point
-  const double center_x = 1000 - maps_x[prev_wp];
-  const double center_y = 2000 - maps_y[prev_wp];
-  const double centerToPos = distance(center_x, center_y, x_x, x_y);
-  const double centerToRef = distance(center_x, center_y, proj_x, proj_y);
-
-  double frenet_d = distance(x_x, x_y, proj_x, proj_y);
-  if (centerToPos <= centerToRef) {
-    frenet_d *= -1;
-  }
-
-  // calculate s value
-  double frenet_s = 0;
-  for (int i = 0; i < prev_wp; i++) {
-    frenet_s += distance(maps_x[i], maps_y[i], maps_x[i+1], maps_y[i+1]);
-  }
-
-  frenet_s += distance(0, 0, proj_x, proj_y);
-
-  return {frenet_s, frenet_d};
-}
-
-
-// Transform from Frenet s,d coordinates to Cartesian x,y
-std::vector<double> getXY(double s,
-                          double d,
-                          const std::vector<double> &maps_s,
-                          const std::vector<double> &maps_x,
-                          const std::vector<double> &maps_y) {
-  int prev_wp = -1;
-
-  while (s > maps_s[prev_wp+1] &&
-         prev_wp < static_cast<int>(maps_s.size()-1)) {
-    prev_wp++;
-  }
-
-  const int wp2 = (prev_wp + 1) % maps_x.size();
-
-  const double heading = std::atan2((maps_y[wp2]-maps_y[prev_wp]),
-                              (maps_x[wp2]-maps_x[prev_wp]));
-
-  // the x,y,s along the segment
-  const double seg_s = (s - maps_s[prev_wp]);
-
-  const double seg_x = maps_x[prev_wp]+seg_s*cos(heading);
-  const double seg_y = maps_y[prev_wp]+seg_s*sin(heading);
-
-  const double perp_heading = heading - M_PI/2;
-
-  const double x = seg_x + d*std::cos(perp_heading);
-  const double y = seg_y + d*std::sin(perp_heading);
-
-  return {x, y};
-}
-
-
 int main() {
   uWS::Hub h;
-
-  // Load up map values for waypoint's x,y,s and d normalized normal vectors
-  std::vector<double> map_waypoints_x;
-  std::vector<double> map_waypoints_y;
-  std::vector<double> map_waypoints_s;
-  std::vector<double> map_waypoints_dx;
-  std::vector<double> map_waypoints_dy;
 
   // Waypoint map to read from
   std::string map_file_ = "../data/highway_map.csv";
 
-  // The max s value before wrapping around the track back to 0
-  double max_s = 6945.554;
-
   std::ifstream in_map_(map_file_.c_str(), std::ifstream::in);
 
-  std::string line;
-  while (getline(in_map_, line)) {
-    std::istringstream iss(line);
-    double x;
-    double y;
-    float s;
-    float d_x;
-    float d_y;
-    iss >> x;
-    iss >> y;
-    iss >> s;
-    iss >> d_x;
-    iss >> d_y;
-    map_waypoints_x.push_back(x);
-    map_waypoints_y.push_back(y);
-    map_waypoints_s.push_back(s);
-    map_waypoints_dx.push_back(d_x);
-    map_waypoints_dy.push_back(d_y);
-  }
-  h.onMessage([&map_waypoints_x,
-               &map_waypoints_y,
-               &map_waypoints_s,
-               &map_waypoints_dx,
-               &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws,
+  // Load up map values for waypoint's x,y,s and d normalized normal vectors
+  Map map(in_map_);
+
+  h.onMessage([&map](uWS::WebSocket<uWS::SERVER> ws,
                                   char *data,
                                   size_t length,
                                   uWS::OpCode opCode) {
@@ -248,14 +94,10 @@ int main() {
             double next_s = car_s + (i + 1) * dist_inc;
             double next_d = 6.0;
 
-            std::vector<double> xy = getXY(next_s,
-                                           next_d,
-                                           map_waypoints_s,
-                                           map_waypoints_x,
-                                           map_waypoints_y);
+            const auto xy = map.ToCartesian({next_s, next_d});
 
-            next_x_vals.push_back(xy.at(0));
-            next_y_vals.push_back(xy.at(1));
+            next_x_vals.push_back(xy.x());
+            next_y_vals.push_back(xy.y());
           }
 
           // TODO(you): define a path made up of (x,y) points that the car will
