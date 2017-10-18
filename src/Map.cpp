@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <sstream>
 #include <limits>
+#include <algorithm>
+#include <cassert>
 
 Map::Map(std::istream& is) {
   std::string line;
@@ -89,3 +91,36 @@ Eigen::Vector2d Map::ToFrenet(const Eigen::Vector2d& cartesian) const {
   return {frenet_s, frenet_d};
 }
 
+
+Eigen::Vector2d Map::ToCartesian(const Eigen::Vector2d& frenet) const {
+  assert(!track_.empty());
+
+  double s = frenet[0];
+  s -= length_ * static_cast<int>(s / length_);
+  if (s < 0) {
+    s += length_;
+  }
+
+  auto next_it = std::lower_bound(track_.cbegin(),
+                                  track_.cend(),
+                                  s,
+                                  [](const Waypoint& wp, double s) {
+                                    return wp.s_ < s;
+                                  });
+
+  auto it = next_it - 1;
+  if (track_.cend() == next_it) {
+    next_it = track_.begin();
+  }
+
+  using Eigen::Vector2d;
+  const Vector2d dir_to_next = (next_it->pos_ - it->pos_).normalized();
+
+  const double seg_s = (s - it->s_);
+  const double seg_x = it->pos_.x() + seg_s * dir_to_next.x();
+  const double seg_y = it->pos_.y() + seg_s * dir_to_next.y();
+
+  const double x = seg_x + frenet[1] * dir_to_next.y();
+  const double y = seg_y - frenet[1] * dir_to_next.x();
+  return {x, y};
+}

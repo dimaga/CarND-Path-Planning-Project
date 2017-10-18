@@ -15,6 +15,7 @@ class Map {
   std::size_t NextWaypoint(const Eigen::Vector2d& pos) const;
 
   Eigen::Vector2d ToFrenet(const Eigen::Vector2d& cartesian) const;
+  Eigen::Vector2d ToCartesian(const Eigen::Vector2d& frenet) const;
 
  private:
   std::vector<Waypoint> track_;
