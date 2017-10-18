@@ -87,5 +87,17 @@ TEST_CASE("Map unit tests", "[map]") {
       REQUIRE(Approx(3.0) == cartesian[0]);
       REQUIRE(Approx(0.0) == cartesian[1]);
     }
+
+    SECTION("s == 0") {
+      const Vector2d cartesian = map.ToCartesian({0.0, 0.0});
+      REQUIRE(Approx(-20.0) == cartesian[0]);
+      REQUIRE(Approx(0.0) == cartesian[1]);
+    }
+
+    SECTION("s == 74.083269") {
+      const Vector2d cartesian = map.ToCartesian({74.083269, 0.0});
+      REQUIRE(Approx(-5.0) == cartesian[0]);
+      REQUIRE(Approx(10.0) == cartesian[1]);
+    }
   }
 }

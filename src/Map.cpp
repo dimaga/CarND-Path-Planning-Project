@@ -101,14 +101,14 @@ Eigen::Vector2d Map::ToCartesian(const Eigen::Vector2d& frenet) const {
     s += length_;
   }
 
-  auto next_it = std::lower_bound(track_.cbegin(),
+  auto next_it = std::upper_bound(track_.cbegin(),
                                   track_.cend(),
                                   s,
-                                  [](const Waypoint& wp, double s) {
-                                    return wp.s_ < s;
+                                  [](double s, const Waypoint& wp) {
+                                    return s < wp.s_;
                                   });
 
-  auto it = next_it - 1;
+  const auto it = (track_.cbegin() == next_it ? track_.cend() : next_it) - 1;
   if (track_.cend() == next_it) {
     next_it = track_.begin();
   }
