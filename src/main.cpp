@@ -9,6 +9,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "Map.h"
+#include "spline.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -45,7 +46,9 @@ int main() {
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   Map map(in_map_);
 
-  h.onMessage([&map](uWS::WebSocket<uWS::SERVER> ws,
+  int lane = 1;
+
+  h.onMessage([&map, lane](uWS::WebSocket<uWS::SERVER> ws,
                                   char *data,
                                   size_t length,
                                   uWS::OpCode opCode) {
@@ -73,9 +76,11 @@ int main() {
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
+          using std::vector;
+
           // Previous path data given to the Planner
-          auto previous_path_x = j[1]["previous_path_x"];
-          auto previous_path_y = j[1]["previous_path_y"];
+          vector<double> previous_path_x = j[1]["previous_path_x"];
+          vector<double> previous_path_y = j[1]["previous_path_y"];
           // Previous path's end s and d values
           double end_path_s = j[1]["end_path_s"];
           double end_path_d = j[1]["end_path_d"];
@@ -84,24 +89,105 @@ int main() {
           // the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
 
-          json msgJson;
 
-          std::vector<double> next_x_vals;
-          std::vector<double> next_y_vals;
+          vector<double> ptsx;
+          vector<double> ptsy;
 
-          double dist_inc = 0.5;
-          for (int i = 0; i < 50; i++) {
-            double next_s = car_s + (i + 1) * dist_inc;
-            double next_d = 6.0;
+          double ref_x = car_x;
+          double ref_y = car_y;
+          double ref_yaw = deg2rad(car_yaw);
 
-            const auto xy = map.ToCartesian({next_s, next_d});
+          const std::size_t prev_size = previous_path_x.size();
 
-            next_x_vals.push_back(xy.x());
-            next_y_vals.push_back(xy.y());
+          if (prev_size < 2) {
+            const double prev_car_x = car_x - std::cos(ref_yaw);
+            const double prev_car_y = car_y - std::sin(ref_yaw);
+
+            ptsx.push_back(prev_car_x);
+            ptsx.push_back(car_x);
+
+            ptsy.push_back(prev_car_y);
+            ptsy.push_back(car_y);
+          } else {
+            ref_x = previous_path_x.at(prev_size - 1);
+            ref_y = previous_path_y.at(prev_size - 1);
+
+            const double ref_x_prev = previous_path_x.at(prev_size - 2);
+            const double ref_y_prev = previous_path_y.at(prev_size - 2);
+            ref_yaw = std::atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+
+            ptsx.push_back(ref_x_prev);
+            ptsx.push_back(ref_x);
+
+            ptsy.push_back(ref_y_prev);
+            ptsy.push_back(ref_y);
+          }
+
+          const auto xy0 = map.ToCartesian({car_s + 30, (2 + 4 * lane)});
+          const auto xy1 = map.ToCartesian({car_s + 60, (2 + 4 * lane)});
+          const auto xy2 = map.ToCartesian({car_s + 90, (2 + 4 * lane)});
+
+          ptsx.push_back(xy0.x());
+          ptsx.push_back(xy1.x());
+          ptsx.push_back(xy2.x());
+
+          ptsy.push_back(xy0.y());
+          ptsy.push_back(xy1.y());
+          ptsy.push_back(xy2.y());
+
+          const double cos_neg_yaw = std::cos(-ref_yaw);
+          const double sin_neg_yaw = std::sin(-ref_yaw);
+
+          // Convert in local reference frame of the car
+          for (std::size_t i = 0, sz = ptsx.size(); i < sz; ++i) {
+            const double shift_x = ptsx[i] - ref_x;
+            const double shift_y = ptsy[i] - ref_y;
+
+            ptsx.at(i) = shift_x * cos_neg_yaw - shift_y * sin_neg_yaw;
+            ptsy.at(i) = shift_x * sin_neg_yaw + shift_y * cos_neg_yaw;
+          }
+
+          tk::spline s;
+          s.set_points(ptsx, ptsy);
+
+          vector<double> next_x_vals = previous_path_x;
+          vector<double> next_y_vals = previous_path_y;
+
+          const double target_x = 30.0;
+          const double target_y = s(target_x);
+          const double target_dist = Eigen::Vector2d{target_x, target_y}.norm();
+
+          double x_add_on = 0;
+
+          const double ref_val = 45.0;
+
+          const double cos_yaw = std::cos(ref_yaw);
+          const double sin_yaw = std::sin(ref_yaw);
+
+          for (std::size_t i = previous_path_x.size(); i < 50; ++i) {
+            const double N = target_dist / (.02 * ref_val / 2.24);
+            double x_point = x_add_on + target_x / N;
+            double y_point = s(x_point);
+
+            x_add_on = x_point;
+
+            const double x_ref = x_point;
+            const double y_ref = y_point;
+
+            x_point = x_ref * cos_yaw - y_ref * sin_yaw;
+            y_point = x_ref * sin_yaw + y_ref * cos_yaw;
+
+            x_point += ref_x;
+            y_point += ref_y;
+
+            next_x_vals.push_back(x_point);
+            next_y_vals.push_back(y_point);
           }
 
           // TODO(you): define a path made up of (x,y) points that the car will
           // visit sequentially every .02 seconds
+
+          json msgJson;
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
