@@ -9,7 +9,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "Map.h"
-#include "spline.h"
+#include "Trajectory.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -44,15 +44,19 @@ int main() {
   std::ifstream in_map_(map_file_.c_str(), std::ifstream::in);
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
-  Map map(in_map_);
+  const Map map(in_map_);
+  Trajectory trajectory;
 
   int lane = 1;
   float ref_vel = 0.0;
 
-  h.onMessage([&map, &ref_vel, &lane](uWS::WebSocket<uWS::SERVER> ws,
-                          char *data,
-                          size_t length,
-                          uWS::OpCode opCode) {
+  h.onMessage([&map,
+               &trajectory,
+               &ref_vel,
+               &lane](uWS::WebSocket<uWS::SERVER> ws,
+                      char *data,
+                      size_t length,
+                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -74,7 +78,7 @@ int main() {
           double car_y = j[1]["y"];
           double car_s = j[1]["s"];
           double car_d = j[1]["d"];
-          double car_yaw = j[1]["yaw"];
+          double car_yaw_deg = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
           using std::vector;
@@ -110,7 +114,9 @@ int main() {
             if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
               const double check_speed = std::sqrt(vx*vx + vy*vy);
 
-              const double check_car_s = s + ((double)prev_size*.02*check_speed);
+              const double check_car_s =
+                s + static_cast<double>(prev_size) * .02 * check_speed;
+
               if (check_car_s > car_s &&check_car_s - car_s < 30) {
                 too_close = true;
 
@@ -130,105 +136,28 @@ int main() {
             // std::cout << "d = " << d << "\n\n";
           }
 
-          vector<double> ptsx;
-          vector<double> ptsy;
-
-          double ref_x = car_x;
-          double ref_y = car_y;
-          double ref_yaw = deg2rad(car_yaw);
-
-          if (prev_size < 2) {
-            const double prev_car_x = car_x - std::cos(ref_yaw);
-            const double prev_car_y = car_y - std::sin(ref_yaw);
-
-            ptsx.push_back(prev_car_x);
-            ptsx.push_back(car_x);
-
-            ptsy.push_back(prev_car_y);
-            ptsy.push_back(car_y);
-          } else {
-            ref_x = previous_path_x.at(prev_size - 1);
-            ref_y = previous_path_y.at(prev_size - 1);
-
-            const double ref_x_prev = previous_path_x.at(prev_size - 2);
-            const double ref_y_prev = previous_path_y.at(prev_size - 2);
-            ref_yaw = std::atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
-
-            ptsx.push_back(ref_x_prev);
-            ptsx.push_back(ref_x);
-
-            ptsy.push_back(ref_y_prev);
-            ptsy.push_back(ref_y);
+          if (too_close && ref_vel > 0.224) {
+            ref_vel -= 0.224;
+          } else if (ref_vel < 49.5) {
+            ref_vel += 0.224;
           }
+
+          double car_yaw_rad = deg2rad(car_yaw_deg);
+
+          trajectory.set_car_pos({car_x, car_y});
+          trajectory.set_car_yaw_rad(car_yaw_rad);
+          trajectory.set_car_speed(car_speed);
+          trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           const auto xy0 = map.ToCartesian({car_s + 30, (2 + 4 * lane)});
           const auto xy1 = map.ToCartesian({car_s + 60, (2 + 4 * lane)});
           const auto xy2 = map.ToCartesian({car_s + 90, (2 + 4 * lane)});
 
-          ptsx.push_back(xy0.x());
-          ptsx.push_back(xy1.x());
-          ptsx.push_back(xy2.x());
-
-          ptsy.push_back(xy0.y());
-          ptsy.push_back(xy1.y());
-          ptsy.push_back(xy2.y());
-
-          const double cos_neg_yaw = std::cos(-ref_yaw);
-          const double sin_neg_yaw = std::sin(-ref_yaw);
-
-          // Convert in local reference frame of the car
-          for (std::size_t i = 0, sz = ptsx.size(); i < sz; ++i) {
-            const double shift_x = ptsx[i] - ref_x;
-            const double shift_y = ptsy[i] - ref_y;
-
-            ptsx.at(i) = shift_x * cos_neg_yaw - shift_y * sin_neg_yaw;
-            ptsy.at(i) = shift_x * sin_neg_yaw + shift_y * cos_neg_yaw;
-          }
-
-          tk::spline s;
-          s.set_points(ptsx, ptsy);
-
-          vector<double> next_x_vals = previous_path_x;
-          vector<double> next_y_vals = previous_path_y;
-
-          const double target_x = 30.0;
-          const double target_y = s(target_x);
-          const double target_dist = Eigen::Vector2d{target_x, target_y}.norm();
-
-          double x_add_on = 0;
-
-          const double cos_yaw = std::cos(ref_yaw);
-          const double sin_yaw = std::sin(ref_yaw);
-
-          for (std::size_t i = previous_path_x.size(); i < 50; ++i) {
-            const double N = target_dist / (.02 * ref_vel / 2.24);
-            double x_point = x_add_on + target_x / N;
-            double y_point = s(x_point);
-
-            x_add_on = x_point;
-
-            const double x_ref = x_point;
-            const double y_ref = y_point;
-
-            x_point = x_ref * cos_yaw - y_ref * sin_yaw;
-            y_point = x_ref * sin_yaw + y_ref * cos_yaw;
-
-            x_point += ref_x;
-            y_point += ref_y;
-
-            next_x_vals.push_back(x_point);
-            next_y_vals.push_back(y_point);
-
-            if (too_close && ref_vel > 0.224) {
-              ref_vel -= 0.224;
-            } else if(ref_vel < 49.5) {
-              ref_vel += 0.224;
-            }
-          }
+          trajectory.Trace(ref_vel, {xy0, xy1, xy2});
 
           json msgJson;
-          msgJson["next_x"] = next_x_vals;
-          msgJson["next_y"] = next_y_vals;
+          msgJson["next_x"] = trajectory.path_x();
+          msgJson["next_y"] = trajectory.path_y();
 
           auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
