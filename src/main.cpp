@@ -49,7 +49,7 @@ int main() {
   int lane = 1;
   float ref_vel = 0.0;
 
-  h.onMessage([&map, &ref_vel, lane](uWS::WebSocket<uWS::SERVER> ws,
+  h.onMessage([&map, &ref_vel, &lane](uWS::WebSocket<uWS::SERVER> ws,
                           char *data,
                           size_t length,
                           uWS::OpCode opCode) {
@@ -113,6 +113,10 @@ int main() {
               const double check_car_s = s + ((double)prev_size*.02*check_speed);
               if (check_car_s > car_s &&check_car_s - car_s < 30) {
                 too_close = true;
+
+                if (lane > 0) {
+                  lane = 0;
+                }
                 break;
               }
             }
