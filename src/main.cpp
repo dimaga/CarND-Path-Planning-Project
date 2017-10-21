@@ -89,6 +89,42 @@ int main() {
           // the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
 
+          const std::size_t prev_size = previous_path_x.size();
+
+          if (prev_size > 0) {
+            car_s = end_path_s;
+          }
+
+          double ref_vel = 45.0;
+
+          bool too_close = false;
+
+          for (const auto& id_xy_vxy_sd : sensor_fusion) {
+            const int id = id_xy_vxy_sd[0];
+            const double x = id_xy_vxy_sd[1];
+            const double y = id_xy_vxy_sd[2];
+            const double vx = id_xy_vxy_sd[3];
+            const double vy = id_xy_vxy_sd[4];
+            const double s = id_xy_vxy_sd[5];
+            const double d = id_xy_vxy_sd[6];
+
+            if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
+              const double check_speed = std::sqrt(vx*vx + vy*vy);
+
+              const double check_car_s = s + ((double)prev_size*.02*check_speed);
+              if (check_car_s > car_s &&check_car_s - car_s < 30) {
+                ref_vel = 29.5;
+              }
+            }
+
+            // std::cout << "id = " << id << "\n";
+            // std::cout << "x = " << x << "\n";
+            // std::cout << "y = " << y << "\n";
+            // std::cout << "vx = " << vx << "\n";
+            // std::cout << "vy = " << vy << "\n";
+            // std::cout << "s = " << s << "\n";
+            // std::cout << "d = " << d << "\n\n";
+          }
 
           vector<double> ptsx;
           vector<double> ptsy;
@@ -96,8 +132,6 @@ int main() {
           double ref_x = car_x;
           double ref_y = car_y;
           double ref_yaw = deg2rad(car_yaw);
-
-          const std::size_t prev_size = previous_path_x.size();
 
           if (prev_size < 2) {
             const double prev_car_x = car_x - std::cos(ref_yaw);
@@ -159,13 +193,11 @@ int main() {
 
           double x_add_on = 0;
 
-          const double ref_val = 45.0;
-
           const double cos_yaw = std::cos(ref_yaw);
           const double sin_yaw = std::sin(ref_yaw);
 
           for (std::size_t i = previous_path_x.size(); i < 50; ++i) {
-            const double N = target_dist / (.02 * ref_val / 2.24);
+            const double N = target_dist / (.02 * ref_vel / 2.24);
             double x_point = x_add_on + target_x / N;
             double y_point = s(x_point);
 
