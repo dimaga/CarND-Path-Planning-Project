@@ -47,11 +47,12 @@ int main() {
   Map map(in_map_);
 
   int lane = 1;
+  float ref_vel = 0.0;
 
-  h.onMessage([&map, lane](uWS::WebSocket<uWS::SERVER> ws,
-                                  char *data,
-                                  size_t length,
-                                  uWS::OpCode opCode) {
+  h.onMessage([&map, &ref_vel, lane](uWS::WebSocket<uWS::SERVER> ws,
+                          char *data,
+                          size_t length,
+                          uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -95,8 +96,6 @@ int main() {
             car_s = end_path_s;
           }
 
-          double ref_vel = 45.0;
-
           bool too_close = false;
 
           for (const auto& id_xy_vxy_sd : sensor_fusion) {
@@ -113,7 +112,8 @@ int main() {
 
               const double check_car_s = s + ((double)prev_size*.02*check_speed);
               if (check_car_s > car_s &&check_car_s - car_s < 30) {
-                ref_vel = 29.5;
+                too_close = true;
+                break;
               }
             }
 
@@ -214,10 +214,13 @@ int main() {
 
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
-          }
 
-          // TODO(you): define a path made up of (x,y) points that the car will
-          // visit sequentially every .02 seconds
+            if (too_close && ref_vel > 0.224) {
+              ref_vel -= 0.224;
+            } else if(ref_vel < 49.5) {
+              ref_vel += 0.224;
+            }
+          }
 
           json msgJson;
           msgJson["next_x"] = next_x_vals;
