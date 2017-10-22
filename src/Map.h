@@ -2,10 +2,11 @@
 #define SRC_MAP_H_
 
 #include "Waypoint.h"
+#include "IMap.h"
 #include <istream>
 #include <vector>
 
-class Map {
+class Map final : public IMap {
  public:
   explicit Map(std::istream& is);
 
@@ -14,8 +15,11 @@ class Map {
   std::size_t ClosestWaypoint(const Eigen::Vector2d& pos) const;
   std::size_t NextWaypoint(const Eigen::Vector2d& pos) const;
 
-  Eigen::Vector2d ToFrenet(const Eigen::Vector2d& cartesian) const;
-  Eigen::Vector2d ToCartesian(const Eigen::Vector2d& frenet) const;
+  Eigen::Vector2d ToFrenetVel(const Eigen::Vector2d& cartesian,
+                              const Eigen::Vector2d& vel) const override;
+
+  Eigen::Vector2d ToFrenet(const Eigen::Vector2d& cartesian) const override;
+  Eigen::Vector2d ToCartesian(const Eigen::Vector2d& frenet) const override;
 
  private:
   std::vector<Waypoint> track_;

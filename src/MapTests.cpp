@@ -49,6 +49,21 @@ TEST_CASE("Map unit tests", "[map]") {
     }
   }
 
+  SECTION("ToFrenetVel()") {
+    SECTION("Parallel to the route") {
+      const Vector2d frenetVel = map.ToFrenetVel({0.0, 11.0}, {2.0, -1.0});
+      REQUIRE(Approx(-2.0) == frenetVel[0]);
+      REQUIRE(Approx(-1.0) == frenetVel[1]);
+    }
+
+    SECTION("Secondary diagonal to the route") {
+      const Vector2d vel {-3, -2};
+      const Vector2d frenetVel = map.ToFrenetVel({-6.0, 9.0}, vel);
+      REQUIRE(Approx(vel.norm()) == frenetVel[0]);
+      REQUIRE(Approx(0.0) == frenetVel[1]);
+    }
+  }
+
   SECTION("ToCartesian()") {
     SECTION("Point 1") {
       const Vector2d cartesian = map.ToCartesian({18.027756, 0.0});

@@ -21,6 +21,7 @@ set(sources
     src/ICosts.h
     src/Map.cpp
     src/Map.h
+    src/IMap.h
     src/Waypoint.h)
 
 set(sources_main

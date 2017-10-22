@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "Map.h"
 #include "Trajectory.h"
+#include "Obstacles.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -44,14 +45,16 @@ int main() {
   std::ifstream in_map_(map_file_.c_str(), std::ifstream::in);
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
-  const Map map(in_map_);
+  const Map map{in_map_};
   Trajectory trajectory;
+  Obstacles obstacles{map};
 
   int lane = 1;
   double ref_vel = 0.0;
 
   h.onMessage([&map,
                &trajectory,
+               &obstacles,
                &ref_vel,
                &lane](uWS::WebSocket<uWS::SERVER> ws,
                       char *data,
@@ -100,6 +103,45 @@ int main() {
             car_s = end_path_s;
           }
 
+          obstacles.Clear();
+          for (const auto& id_xy_vxy_sd : sensor_fusion) {
+            const double x = id_xy_vxy_sd[1];
+            const double y = id_xy_vxy_sd[2];
+            const double vx = id_xy_vxy_sd[3];
+            const double vy = id_xy_vxy_sd[4];
+            //const double s = id_xy_vxy_sd[5];
+            //const double d = id_xy_vxy_sd[6];
+
+            obstacles.Add({x, y}, {vx, vy});
+          }
+
+          auto obstacle = obstacles.Forward(car_s, lane, 30);
+          if (obstacle) {
+            if (lane > 0) {
+              auto left_obstacle = obstacles.Forward(car_s, lane - 1, 30);
+              if (left_obstacle) {
+                ref_vel = obstacle->velocity_mph();
+              } else {
+                ref_vel = 45.0;
+                lane = lane - 1;
+              }
+            } else if (lane < 2) {
+              auto right_obstacle = obstacles.Forward(car_s, lane + 1, 30);
+              if (right_obstacle) {
+                ref_vel = obstacle->velocity_mph();
+              } else {
+                ref_vel = 45.0;
+                lane = lane + 1;
+              }
+            } else {
+              ref_vel = obstacle->velocity_mph();
+            }
+          } else {
+            ref_vel = 45.0;
+          }
+
+          /*
+
           bool too_close = false;
 
           for (const auto& id_xy_vxy_sd : sensor_fusion) {
@@ -141,6 +183,7 @@ int main() {
           } else if (ref_vel < 45.0) {
             ref_vel += 0.224;
           }
+          */
 
           /*if (too_close) {
             ref_vel = 29.5;

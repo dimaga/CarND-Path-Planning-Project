@@ -4,6 +4,7 @@
 #include <limits>
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 Map::Map(std::istream& is) {
   std::string line;
@@ -68,6 +69,23 @@ std::size_t Map::NextWaypoint(const Eigen::Vector2d& pos) const {
   } else {
     return idx;
   }
+}
+
+
+Eigen::Vector2d Map::ToFrenetVel(const Eigen::Vector2d& cartesian,
+                                 const Eigen::Vector2d& vel) const {
+  using std::size_t;
+  const size_t next_idx = NextWaypoint(cartesian);
+  const size_t prev_idx = next_idx ? (next_idx - 1) : (track_.size() - 1);
+
+  const auto& prev_wp = track_.at(prev_idx);
+
+  Eigen::Matrix2d to_local;
+  to_local <<
+    -prev_wp.normal_.y(), prev_wp.normal_.x(),
+    prev_wp.normal_.x(), prev_wp.normal_.y();
+
+  return to_local * vel;
 }
 
 

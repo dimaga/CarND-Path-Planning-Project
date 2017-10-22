@@ -3,7 +3,7 @@
 
 #include "ITrajectory.h"
 
-class Trajectory : public ITrajectory {
+class Trajectory final : public ITrajectory {
  public:
   void set_car_pos(const Eigen::Vector2d& pos) override;
   void set_car_yaw_rad(double yaw_rad) override;

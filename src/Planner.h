@@ -4,7 +4,7 @@
 #include "IObstacles.h"
 #include "ICosts.h"
 
-class Planner {
+class Planner final {
  public:
 };
 
