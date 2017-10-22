@@ -100,6 +100,7 @@ void Trajectory::Trace(double target_speed_mph,
   path_x_ = previous_path_x_;
   path_y_ = previous_path_y_;
 
+  // Resample and convert back to global coordinates
   double x_add_on = 0.0;
 
   const double cos_yaw = std::cos(ref_yaw);
@@ -110,47 +111,34 @@ void Trajectory::Trace(double target_speed_mph,
   const double total_time = last_spline_x / avg_speed;
   const double accel = (target_speed - ref_speed) / total_time;
 
-  // Resample and convert back to global coordinates
-
   for (std::size_t prev_i = previous_path_x_.size(); prev_i < 50; ++prev_i) {
     const std::size_t i = prev_i - previous_path_x_.size();
     const double time_elapsed_sec = i * kDtInSeconds;
 
     const double speed = ref_speed + accel * time_elapsed_sec;
-    const double step = speed * kDtInSeconds;
+    const double step_x = speed * kDtInSeconds;
 
-    const double prev_x_point = x_add_on;
-    const double prev_y_point = s(prev_x_point);
+    const Vector2d prev_point {x_add_on, s(x_add_on)};
+    const Vector2d probe_point {x_add_on + step_x, s(x_add_on + step_x)};
 
-    const double probe_x_point = x_add_on + step;
-    const double probe_y_point = s(probe_x_point);
-    const double probe_step = std::sqrt((probe_x_point - prev_x_point)*(probe_x_point - prev_x_point)
-                                        + (probe_y_point - prev_y_point)*(probe_y_point - prev_y_point));
+    const double step_length = (probe_point - prev_point).norm();
 
     double x_point = x_add_on;
-    if (probe_step > 1e-7) {
-      x_point += step * step / probe_step;
+    if (step_length > 1e-7) {
+      x_point += step_x * step_x / step_length;
     }
 
-    if (x_point > last_spline_x) {
+    const bool exceeds_final_target_point = x_point > last_spline_x;
+    if (exceeds_final_target_point) {
       break;
     }
 
-    double y_point = s(x_point);
+    const double y_point = s(x_point);
 
     x_add_on = x_point;
 
-    const double x_ref = x_point;
-    const double y_ref = y_point;
-
-    x_point = x_ref * cos_yaw - y_ref * sin_yaw;
-    y_point = x_ref * sin_yaw + y_ref * cos_yaw;
-
-    x_point += ref_pos.x();
-    y_point += ref_pos.y();
-
-    path_x_.push_back(x_point);
-    path_y_.push_back(y_point);
+    path_x_.push_back(x_point * cos_yaw - y_point * sin_yaw + ref_pos.x());
+    path_y_.push_back(x_point * sin_yaw + y_point * cos_yaw + ref_pos.y());
   }
 }
 
