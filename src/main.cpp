@@ -146,7 +146,7 @@ int main() {
 
           trajectory.set_car_pos({car_x, car_y});
           trajectory.set_car_yaw_rad(car_yaw_rad);
-          trajectory.set_car_speed(car_speed);
+          trajectory.set_car_speed_mph(car_speed);
           trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           const auto xy0 = map.ToCartesian({car_s + 30, (2 + 4 * lane)});

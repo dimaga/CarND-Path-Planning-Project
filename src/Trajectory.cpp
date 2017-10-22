@@ -13,8 +13,8 @@ void Trajectory::set_car_yaw_rad(double yaw_rad) {
 }
 
 
-void Trajectory::set_car_speed(double speed) {
-  car_speed_ = speed;
+void Trajectory::set_car_speed_mph(double speed_mph) {
+  car_speed_mph_ = speed_mph;
 }
 
 
@@ -94,7 +94,7 @@ void Trajectory::Trace(double target_vel,
   const double sin_yaw = std::sin(ref_yaw);
 
   for (std::size_t i = previous_path_x_.size(); i < 50; ++i) {
-    const double N = target_dist / (.02 * target_vel / 2.24);
+    const double N = target_dist / (kDtInSeconds * target_vel * kMilesPerHour2MetersPerSecond);
     double x_point = x_add_on + target_x / N;
     double y_point = s(x_point);
 

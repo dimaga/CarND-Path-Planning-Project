@@ -7,7 +7,7 @@ class Trajectory : public ITrajectory {
  public:
   void set_car_pos(const Eigen::Vector2d& pos) override;
   void set_car_yaw_rad(double yaw_rad) override;
-  void set_car_speed(double speed) override;
+  void set_car_speed_mph(double speed_mph) override;
 
   void set_previous_path(const std::vector<double>& path_x,
                          const std::vector<double>& path_y) override;
@@ -21,7 +21,7 @@ class Trajectory : public ITrajectory {
  private:
   Eigen::Vector2d car_pos_{};
   double car_yaw_rad_{0};
-  double car_speed_{0};
+  double car_speed_mph_{0};
   std::vector<double> previous_path_x_;
   std::vector<double> previous_path_y_;
   std::vector<double> path_x_;
