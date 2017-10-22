@@ -83,7 +83,7 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
         CAPTURE(vy);
         CAPTURE(dx);
         CAPTURE(dy);
-        REQUIRE(Approx(v) == std::sqrt(vx * vx + vy * vy));
+        REQUIRE(Approx(v).epsilon(1e-2) == std::sqrt(vx * vx + vy * vy));
 
         CAPTURE(i);
         CAPTURE(x);

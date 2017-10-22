@@ -84,19 +84,30 @@ void Trajectory::Trace(double target_vel,
   path_x_ = previous_path_x_;
   path_y_ = previous_path_y_;
 
-  const double target_x = 30.0;
-  const double target_y = s(target_x);
-  const double target_dist = Eigen::Vector2d{target_x, target_y}.norm();
+  //const double target_x = 30.0;
+  //const double target_y = s(target_x);
+  //const double target_dist = Eigen::Vector2d{target_x, target_y}.norm();
 
   double x_add_on = 0;
 
   const double cos_yaw = std::cos(ref_yaw);
   const double sin_yaw = std::sin(ref_yaw);
 
+  const double mph_2_step = kDtInSeconds * kMilesPerHour2MetersPerSecond;
+
   for (std::size_t i = previous_path_x_.size(); i < 50; ++i) {
-    const double N = target_dist / (kDtInSeconds * target_vel * kMilesPerHour2MetersPerSecond);
-    double x_point = x_add_on + target_x / N;
-    double y_point = s(x_point);
+    const double step = target_vel * mph_2_step;
+
+    const double prev_x_point = x_add_on;
+    const double prev_y_point = s(prev_x_point);
+
+    const double probe_x_point = x_add_on + step;
+    const double probe_y_point = s(probe_x_point);
+    const double probe_step = std::sqrt((probe_x_point - prev_x_point)*(probe_x_point - prev_x_point)
+                                        + (probe_y_point - prev_y_point)*(probe_y_point - prev_y_point));
+
+    double x_point = x_add_on + step * step / probe_step;
+    double y_point = s(prev_x_point);
 
     x_add_on = x_point;
 
