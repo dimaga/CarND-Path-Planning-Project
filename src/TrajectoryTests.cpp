@@ -6,11 +6,17 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
   Trajectory trajectory;
 
   SECTION("Straight From Steady Pos") {
-    trajectory.set_car_pos({15.0, -20.0});
+    const double initial_pos_y = -20.0;
+    const double final_pos_y = 10.0;
+    const double pos_x = 15.0;
+    const double initial_speed_mph = 0.0;
+    const double final_speed_mph = 5.0;
+
+    trajectory.set_car_pos({pos_x, initial_pos_y});
     trajectory.set_car_yaw_rad(M_PI / 2);
-    trajectory.set_car_speed_mph(0.0);
+    trajectory.set_car_speed_mph(initial_speed_mph);
     trajectory.set_previous_path({}, {});
-    trajectory.Trace(5.0, {{15.0, 10.0}});
+    trajectory.Trace(final_speed_mph, {{pos_x, final_pos_y}});
 
     {
       const auto& path_x = trajectory.path_x();
@@ -21,15 +27,36 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
       const std::size_t path_sz = path_x.size();
       REQUIRE(3 <= path_sz);
 
-      REQUIRE(Approx(15.0) == path_x.back());
+      const double total_time =
+        (final_pos_y - initial_pos_y) /
+        (0.5 * (initial_speed_mph + final_speed_mph) *
+         ITrajectory::kMilesPerHour2MetersPerSecond);
 
-      const double dx = path_x.at(path_sz - 1) - path_x.at(path_sz - 2);
-      const double dy = path_y.at(path_sz - 1) - path_y.at(path_sz - 2);
+      for (std::size_t i = 0; i < path_sz; ++i) {
+        CAPTURE(i);
+        REQUIRE(Approx(pos_x) == path_x.at(i));
 
-      const double vx = dx / ITrajectory::kDtInSeconds;
-      const double vy = dy / ITrajectory::kDtInSeconds;
-      REQUIRE(Approx(0.0) == vx);
-      REQUIRE(Approx(5.0 * ITrajectory::kMilesPerHour2MetersPerSecond) == vy);
+        if (i > 0 && i < path_sz - 1) {
+          const double y0 = path_y.at(i - 1);
+          const double y1 = path_y.at(i);
+          const double y2 = path_y.at(i + 1);
+
+          const double v1 = (y2 - y0) / (2 * ITrajectory::kDtInSeconds);
+          const double mph = v1 / ITrajectory::kMilesPerHour2MetersPerSecond;
+
+          const double expected_mph =
+              initial_speed_mph
+              + (final_speed_mph - initial_speed_mph)
+              * i * ITrajectory::kDtInSeconds / total_time;
+
+          CAPTURE(i);
+          CAPTURE(y0);
+          CAPTURE(y1);
+          CAPTURE(y2);
+          CAPTURE(expected_mph * ITrajectory::kMilesPerHour2MetersPerSecond);
+          REQUIRE(Approx(expected_mph).epsilon(1e-2) == mph);
+        }
+      }
     }
 
     SECTION("Then Circular with Static Velocity") {

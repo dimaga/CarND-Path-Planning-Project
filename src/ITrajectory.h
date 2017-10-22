@@ -19,7 +19,7 @@ class ITrajectory {
   virtual void set_previous_path(const std::vector<double>& path_x,
                                  const std::vector<double>& path_y) = 0;
 
-  virtual void Trace(double target_vel,
+  virtual void Trace(double target_speed_mph,
                      std::initializer_list<Eigen::Vector2d> target_poses) = 0;
 
   virtual const std::vector<double>& path_x() const = 0;

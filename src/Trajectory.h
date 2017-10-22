@@ -12,7 +12,7 @@ class Trajectory : public ITrajectory {
   void set_previous_path(const std::vector<double>& path_x,
                          const std::vector<double>& path_y) override;
 
-  void Trace(double target_vel,
+  void Trace(double target_speed_mph,
              std::initializer_list<Eigen::Vector2d> target_poses) override;
 
   const std::vector<double>& path_x() const override;

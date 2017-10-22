@@ -48,7 +48,7 @@ int main() {
   Trajectory trajectory;
 
   int lane = 1;
-  float ref_vel = 0.0;
+  double ref_vel = 0.0;
 
   h.onMessage([&map,
                &trajectory,
@@ -79,7 +79,7 @@ int main() {
           double car_s = j[1]["s"];
           double car_d = j[1]["d"];
           double car_yaw_deg = j[1]["yaw"];
-          double car_speed = j[1]["speed"];
+          const double car_speed_mph = j[1]["speed"];
 
           using std::vector;
 
@@ -138,15 +138,21 @@ int main() {
 
           if (too_close && ref_vel > 0.224) {
             ref_vel -= 0.224;
-          } else if (ref_vel < 49.5) {
+          } else if (ref_vel < 45.0) {
             ref_vel += 0.224;
           }
+
+          /*if (too_close) {
+            ref_vel = 29.5;
+          } else {
+            ref_vel = 45.0;
+          }*/
 
           double car_yaw_rad = deg2rad(car_yaw_deg);
 
           trajectory.set_car_pos({car_x, car_y});
           trajectory.set_car_yaw_rad(car_yaw_rad);
-          trajectory.set_car_speed_mph(car_speed);
+          trajectory.set_car_speed_mph(car_speed_mph);
           trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           const auto xy0 = map.ToCartesian({car_s + 30, (2 + 4 * lane)});
