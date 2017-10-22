@@ -21,7 +21,7 @@ class MapDummy final : public IMap {
   }
 };
 
-}
+}  // namespace
 
 
 TEST_CASE("Obstacles unit tests", "[planner]") {
