@@ -14,7 +14,10 @@ class Obstacles final : public IObstacles {
 
   // IObstacles
  public:
-  const Obstacle* Forward(double s, int lane, double range) const override;
+  const Obstacle* Forward(double future_time_sec,
+                          double future_ego_s,
+                          int lane,
+                          double range) const override;
 
  private:
   const IMap& map_;

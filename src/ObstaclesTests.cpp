@@ -35,10 +35,10 @@ TEST_CASE("Obstacles unit tests", "[planner]") {
     obstacles.Add({20.0, IMap::kLaneW * 1.5}, {-12.0, 0.0});
     obstacles.Add({-20.0, IMap::kLaneW * 2.4}, {-12.0, 0.0});
 
-    REQUIRE(nullptr == obstacles.Forward(5.0, IMap::kLaneW * 0.5, 10));
-    REQUIRE(nullptr == obstacles.Forward(20.0, IMap::kLaneW * 1.5, 20));
-    REQUIRE(nullptr == obstacles.Forward(-50.0, IMap::kLaneW * 1.5, 50));
-    REQUIRE(nullptr != obstacles.Forward(0.0, IMap::kLaneW * 1.5, 30));
-    REQUIRE(nullptr != obstacles.Forward(10.0, IMap::kLaneW * 1.5, 40));
+    REQUIRE(nullptr == obstacles.Forward(0.0, 5.0, IMap::kLaneW * 0.5, 10));
+    REQUIRE(nullptr == obstacles.Forward(0.0, 20.0, IMap::kLaneW * 1.5, 20));
+    REQUIRE(nullptr == obstacles.Forward(0.0, -50.0, IMap::kLaneW * 1.5, 50));
+    REQUIRE(nullptr != obstacles.Forward(0.0, 0.0, IMap::kLaneW * 1.5, 30));
+    REQUIRE(nullptr != obstacles.Forward(0.0, 10.0, IMap::kLaneW * 1.5, 40));
   }
 }

@@ -115,23 +115,24 @@ int main() {
             obstacles.Add({x, y}, {vx, vy});
           }
 
-          auto obstacle = obstacles.Forward(car_s, lane, 30);
+          const double future_time_sec = prev_size * ITrajectory::kDtInSeconds;
+          auto obstacle = obstacles.Forward(future_time_sec, car_s, lane, 30);
           if (obstacle) {
-            if (lane > 0) {
-              auto left_obstacle = obstacles.Forward(car_s, lane - 1, 30);
-              if (left_obstacle) {
-                ref_vel = obstacle->velocity_mph();
-              } else {
-                ref_vel = 45.0;
-                lane = lane - 1;
-              }
-            } else if (lane < 2) {
-              auto right_obstacle = obstacles.Forward(car_s, lane + 1, 30);
+            if (lane < 2) {
+              auto right_obstacle = obstacles.Forward(future_time_sec, car_s, lane + 1, 30);
               if (right_obstacle) {
                 ref_vel = obstacle->velocity_mph();
               } else {
                 ref_vel = 45.0;
                 lane = lane + 1;
+              }
+            } else if (lane > 0) {
+              auto left_obstacle = obstacles.Forward(future_time_sec, car_s, lane - 1, 30);
+              if (left_obstacle) {
+                ref_vel = obstacle->velocity_mph();
+              } else {
+                ref_vel = 45.0;
+                lane = lane - 1;
               }
             } else {
               ref_vel = obstacle->velocity_mph();

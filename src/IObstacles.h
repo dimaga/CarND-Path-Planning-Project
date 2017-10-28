@@ -17,7 +17,10 @@ class IObstacles {
     }
   };
 
-  virtual const Obstacle* Forward(double s, int lane, double range) const = 0;
+  virtual const Obstacle* Forward(double future_time_sec,
+                                  double future_ego_s,
+                                  int lane,
+                                  double range) const = 0;
 };
 
 #endif  // SRC_IOBSTACLES_H_
