@@ -23,7 +23,6 @@ const Obstacles::Obstacle* Obstacles::Forward(double future_time_sec,
                                               double future_ego_s,
                                               int lane,
                                               double range) const {
-
   const Obstacles::Obstacle* result = nullptr;
   double min_s = std::numeric_limits<double>::max();
 
@@ -34,7 +33,7 @@ const Obstacles::Obstacle* Obstacles::Forward(double future_time_sec,
       continue;
     }
 
-    if(d < IMap::kLaneW * lane) {
+    if (d < IMap::kLaneW * lane) {
       continue;
     }
 
