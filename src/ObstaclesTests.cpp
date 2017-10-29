@@ -5,6 +5,7 @@
 #include "Eigen-3.3/Eigen/LU"
 #include <cmath>
 #include <cassert>
+#include <vector>
 
 namespace {
 
@@ -69,14 +70,14 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
   CircleMapDummy circle_map_dummy;
   Obstacles obstacles(circle_map_dummy);
 
-  SECTION("Forward") {
-    obstacles.Clear();
-    obstacles.Add({-kInnerRadius, 0.0}, {0.0, -10.0});
-    obstacles.Add({-kInnerRadius, 0.0}, {0.0, -20.0});
-    obstacles.Add({kInnerRadius + 0.5 * IMap::kLaneW, 0.0}, {0.0, 10.0});
-    obstacles.Add({0.0, kInnerRadius + 0.5 * IMap::kLaneW}, {-10.0, 0.0});
-    obstacles.Add({0.0, kInnerRadius + 1.5 * IMap::kLaneW}, {-12.0, 0.0});
+  obstacles.Clear();
+  obstacles.Add({-kInnerRadius, 0.0}, {0.0, -10.0});
+  obstacles.Add({-kInnerRadius, 0.0}, {0.0, -20.0});
+  obstacles.Add({kInnerRadius + 0.5 * IMap::kLaneW, 0.0}, {0.0, 10.0});
+  obstacles.Add({0.0, kInnerRadius + 0.5 * IMap::kLaneW}, {-10.0, 0.0});
+  obstacles.Add({0.0, kInnerRadius + 1.5 * IMap::kLaneW}, {-12.0, 0.0});
 
+  SECTION("Forward") {
     SECTION("Basic Cases") {
       REQUIRE(nullptr != obstacles.Forward(0.0, -1.0, 0, 10.0));
       REQUIRE(nullptr == obstacles.Forward(0.0, -1.0, 1, 10.0));
@@ -104,5 +105,28 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
       REQUIRE(Approx(10) == obstacle->velocity_mph()
               * ITrajectory::kMilesPerHour2MetersPerSecond);
     }
+  }
+
+  SECTION("IsCollided") {
+    std::vector<double> path_x;
+    std::vector<double> path_y;
+
+    double kVel = 5;
+    bool expected = false;
+
+    SECTION("Intersecting path") {
+      expected = true;
+      kVel = 15;
+    }
+
+    const double angle_step = kVel * ITrajectory::kDtInSeconds / kInnerRadius;
+    const double angle_offset = M_PI - Obstacles::kLength / kInnerRadius * 1.01;
+
+    for (int i = 0; i < 100; ++i) {
+      path_x.push_back(kInnerRadius * std::cos(i * angle_step + angle_offset));
+      path_y.push_back(kInnerRadius * std::sin(i * angle_step + angle_offset));
+    }
+
+    REQUIRE(expected == obstacles.IsCollided(path_x, path_y));
   }
 }

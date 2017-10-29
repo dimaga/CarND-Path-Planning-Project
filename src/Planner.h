@@ -15,13 +15,18 @@ class Planner final {
   const IMap& map_;
 
   struct Config {
-    int lane_{1};
-    double ref_vel_{45.0};
+    Config(int lane, double ref_vel)
+      : lane_{lane}
+      , ref_vel_{ref_vel} {}
+
+    int lane_;
+    double ref_vel_;
   };
 
-  Config last_config_;
+  Config last_config_{1, 45.0};
 
-  double cost(const IObstacles& obstacles, const ITrajectory& trajectory) const;
+  double EstimateCost(const IObstacles& obstacles,
+                      const ITrajectory& trajectory) const;
 
   void Trace(double recent_frenet_s,
              const Config& config,

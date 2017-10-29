@@ -1,5 +1,6 @@
 #include "Obstacles.h"
 #include <limits>
+#include <cassert>
 
 Obstacles::Obstacles(const IMap& map)
   : map_(map) {
@@ -62,4 +63,32 @@ const Obstacles::Obstacle* Obstacles::Forward(double future_time_sec,
   }
 
   return result;
+}
+
+
+bool Obstacles::IsCollided(const std::vector<double>& path_x,
+                           const std::vector<double>& path_y) const {
+  assert(path_x.size() == path_y.size());
+
+
+  for (std::size_t i = 0, sz = path_x.size(); i < sz; ++i) {
+    const double t = i * ITrajectory::kDtInSeconds;
+
+    using Eigen::Vector2d;
+    const Vector2d v { map_.ToFrenet({ path_x.at(i), path_y.at(i) })};
+
+    for (const auto& obstacle : obstacles_) {
+      const double forward_speed = obstacle.frenet_vel_[0];
+
+      const Vector2d f { obstacle.frenet_[0] + forward_speed * t,
+                         obstacle.frenet_[1] };
+
+      if (std::abs(f.x() - v.x()) < kLength &&
+          std::abs(f.y() - v.y()) < kWidth) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
