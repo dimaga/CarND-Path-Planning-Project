@@ -16,9 +16,6 @@ set(sources
     src/Planner.cpp
     src/Planner.h
     src/IObstacles.h
-    src/Costs.cpp
-    src/Costs.h
-    src/ICosts.h
     src/Map.cpp
     src/Map.h
     src/IMap.h
@@ -31,8 +28,6 @@ set(sources_unittests
     src/MapTests.cpp
     src/TrajectoryTests.cpp
     src/ObstaclesTests.cpp
-    src/CostsTests.cpp
-    src/PlannerTests.cpp
     src/unittests.cpp)
 
 set(headers)

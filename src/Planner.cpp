@@ -1,10 +1,8 @@
 #include "Planner.h"
 #include <cassert>
 
-
-Planner::Planner(const IMap& map, const ICosts& costs)
-  : map_(map)
-  , costs_(costs) {}
+Planner::Planner(const IMap& map)
+  : map_(map) {}
 
 
 void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {

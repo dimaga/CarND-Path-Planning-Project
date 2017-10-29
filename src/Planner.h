@@ -4,17 +4,15 @@
 #include "IObstacles.h"
 #include "IMap.h"
 #include "ITrajectory.h"
-#include "ICosts.h"
 
 class Planner final {
  public:
-  Planner(const IMap& map, const ICosts& costs);
+  Planner(const IMap& map);
 
   void Plan(const IObstacles& obstacles, ITrajectory* pTrajectory);
 
  private:
   const IMap& map_;
-  const ICosts& costs_;
   int lane_{1};
   double ref_vel_{45.0};
 };
