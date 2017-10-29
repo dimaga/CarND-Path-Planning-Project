@@ -19,6 +19,20 @@ void Trajectory::set_car_speed_mph(double speed_mph) {
 }
 
 
+double Trajectory::recent_time_sec() const {
+  return previous_path_x_.size() * kDtInSeconds;
+}
+
+
+Eigen::Vector2d Trajectory::recent_cartesian() const {
+  if (previous_path_x_.empty()) {
+    return car_pos_;
+  }
+
+  return { previous_path_x_.back(), previous_path_y_.back() };
+}
+
+
 void Trajectory::set_previous_path(const std::vector<double>& path_x,
                                    const std::vector<double>& path_y) {
   assert(path_x.size() == path_y.size());

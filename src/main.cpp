@@ -11,6 +11,8 @@
 #include "Map.h"
 #include "Trajectory.h"
 #include "Obstacles.h"
+#include "Costs.h"
+#include "Planner.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -47,16 +49,13 @@ int main() {
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   const Map map{in_map_};
   Trajectory trajectory;
-  Obstacles obstacles{map};
+  Obstacles obstacles(map);
+  Costs costs;
+  Planner planner(map, costs);
 
-  int lane = 1;
-  double ref_vel = 0.0;
-
-  h.onMessage([&map,
-               &trajectory,
+  h.onMessage([&trajectory,
                &obstacles,
-               &ref_vel,
-               &lane](uWS::WebSocket<uWS::SERVER> ws,
+               &planner](uWS::WebSocket<uWS::SERVER> ws,
                       char *data,
                       size_t length,
                       uWS::OpCode opCode) {
@@ -97,10 +96,6 @@ int main() {
           // the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
 
-          const std::size_t prev_size = previous_path_x.size();
-
-          const double future_car_s = prev_size > 0 ? end_path_s : car_s;
-
           obstacles.Clear();
           for (const auto& id_xy_vxy_sd : sensor_fusion) {
             const double x = id_xy_vxy_sd[1];
@@ -111,41 +106,6 @@ int main() {
             obstacles.Add({x, y}, {vx, vy});
           }
 
-          const double future_time_sec = prev_size * ITrajectory::kDtInSeconds;
-          auto obstacle = obstacles.Forward(future_time_sec,
-                                            future_car_s,
-                                            lane,
-                                            50);
-          if (obstacle) {
-            if (lane < 2) {
-              auto right_obstacle = obstacles.Forward(future_time_sec,
-                                                      future_car_s,
-                                                      lane + 1,
-                                                      50);
-              if (right_obstacle) {
-                ref_vel = obstacle->velocity_mph();
-              } else {
-                ref_vel = 45.0;
-                lane = lane + 1;
-              }
-            } else if (lane > 0) {
-              auto left_obstacle = obstacles.Forward(future_time_sec,
-                                                     future_car_s,
-                                                     lane - 1,
-                                                     50);
-              if (left_obstacle) {
-                ref_vel = obstacle->velocity_mph();
-              } else {
-                ref_vel = 45.0;
-                lane = lane - 1;
-              }
-            } else {
-              ref_vel = obstacle->velocity_mph();
-            }
-          } else {
-            ref_vel = 45.0;
-          }
-
           double car_yaw_rad = deg2rad(car_yaw_deg);
 
           trajectory.set_car_pos({car_x, car_y});
@@ -153,11 +113,7 @@ int main() {
           trajectory.set_car_speed_mph(car_speed_mph);
           trajectory.set_previous_path(previous_path_x, previous_path_y);
 
-          const auto xy0 = map.ToCartesian({car_s + 30, (2 + 4 * lane)});
-          const auto xy1 = map.ToCartesian({car_s + 60, (2 + 4 * lane)});
-          const auto xy2 = map.ToCartesian({car_s + 90, (2 + 4 * lane)});
-
-          trajectory.Trace(ref_vel, {xy0, xy1, xy2});
+          planner.Plan(obstacles, &trajectory);
 
           json msgJson;
           msgJson["next_x"] = trajectory.path_x();

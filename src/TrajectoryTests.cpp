@@ -16,6 +16,14 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
     trajectory.set_car_yaw_rad(M_PI / 2);
     trajectory.set_car_speed_mph(initial_speed_mph);
     trajectory.set_previous_path({}, {});
+
+    SECTION("Trajectory state") {
+      const double expected_time = 2 * ITrajectory::kDtInSeconds;
+      REQUIRE(Approx(0) == trajectory.recent_time_sec());
+      REQUIRE(Approx(pos_x) == trajectory.recent_cartesian().x());
+      REQUIRE(Approx(initial_pos_y) == trajectory.recent_cartesian().y());
+    }
+
     trajectory.Trace(final_speed_mph, {{pos_x, final_pos_y}});
 
     {
@@ -74,10 +82,20 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
       const double lin_step = v * ITrajectory::kDtInSeconds;
       const double ang_step = lin_step / r;
 
-      trajectory.set_previous_path({r * cos(-2 * ang_step - M_PI / 2),
-                                    r * cos(-ang_step - M_PI / 2)},
-                                   {r * sin(-2 * ang_step - M_PI / 2),
-                                    r * sin(-ang_step - M_PI / 2)});
+      const double prev_x0 = r * cos(-2 * ang_step - M_PI / 2);
+      const double prev_x1 = r * cos(-ang_step - M_PI / 2);
+
+      const double prev_y0 = r * sin(-2 * ang_step - M_PI / 2);
+      const double prev_y1 = r * sin(-ang_step - M_PI / 2);
+
+      trajectory.set_previous_path({prev_x0, prev_x1}, {prev_y0, prev_y1});
+
+      SECTION("Trajectory state") {
+        const double expected_time = 2 * ITrajectory::kDtInSeconds;
+        REQUIRE(Approx(expected_time) == trajectory.recent_time_sec());
+        REQUIRE(Approx(prev_x1) == trajectory.recent_cartesian().x());
+        REQUIRE(Approx(prev_y1) == trajectory.recent_cartesian().y());
+      }
 
       trajectory.Trace(speed_mph,
                       {{r * cos(-M_PI / 4), r * sin(-M_PI / 4)},

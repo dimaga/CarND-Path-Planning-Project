@@ -16,6 +16,9 @@ class ITrajectory {
   virtual void set_car_yaw_rad(double yaw_rad) = 0;
   virtual void set_car_speed_mph(double speed_mph) = 0;
 
+  virtual double recent_time_sec() const = 0;
+  virtual Eigen::Vector2d recent_cartesian() const = 0;
+
   virtual void set_previous_path(const std::vector<double>& path_x,
                                  const std::vector<double>& path_y) = 0;
 
