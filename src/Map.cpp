@@ -113,8 +113,7 @@ Eigen::Vector2d Map::ToFrenet(const Eigen::Vector2d& cartesian) const {
 Eigen::Vector2d Map::ToCartesian(const Eigen::Vector2d& frenet) const {
   assert(!track_.empty());
 
-  double s = frenet[0];
-  s -= length_ * static_cast<int>(s / length_);
+  double s = std::fmod(frenet[0], length_);
   if (s < 0) {
     s += length_;
   }

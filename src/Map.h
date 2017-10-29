@@ -10,10 +10,10 @@ class Map final : public IMap {
  public:
   explicit Map(std::istream& is);
 
-  double length() const;
-
   std::size_t ClosestWaypoint(const Eigen::Vector2d& pos) const;
   std::size_t NextWaypoint(const Eigen::Vector2d& pos) const;
+
+  double length() const override;
 
   Eigen::Vector2d ToFrenetVel(const Eigen::Vector2d& cartesian,
                               const Eigen::Vector2d& vel) const override;

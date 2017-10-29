@@ -9,6 +9,8 @@ class IMap {
 
   virtual ~IMap() = default;
 
+  virtual double length() const = 0;
+
   virtual Eigen::Vector2d ToFrenetVel(const Eigen::Vector2d& cartesian,
                                       const Eigen::Vector2d& vel) const = 0;
 
