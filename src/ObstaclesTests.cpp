@@ -24,7 +24,7 @@ class MapDummy final : public IMap {
 }  // namespace
 
 
-TEST_CASE("Obstacles unit tests", "[planner]") {
+TEST_CASE("Obstacles unit tests", "[obstacles]") {
   MapDummy map_dummy;
   Obstacles obstacles(map_dummy);
 

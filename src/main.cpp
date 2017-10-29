@@ -99,9 +99,7 @@ int main() {
 
           const std::size_t prev_size = previous_path_x.size();
 
-          if (prev_size > 0) {
-            car_s = end_path_s;
-          }
+          const double future_car_s = prev_size > 0 ? end_path_s : car_s;
 
           obstacles.Clear();
           for (const auto& id_xy_vxy_sd : sensor_fusion) {
@@ -109,17 +107,21 @@ int main() {
             const double y = id_xy_vxy_sd[2];
             const double vx = id_xy_vxy_sd[3];
             const double vy = id_xy_vxy_sd[4];
-            //const double s = id_xy_vxy_sd[5];
-            //const double d = id_xy_vxy_sd[6];
 
             obstacles.Add({x, y}, {vx, vy});
           }
 
           const double future_time_sec = prev_size * ITrajectory::kDtInSeconds;
-          auto obstacle = obstacles.Forward(future_time_sec, car_s, lane, 30);
+          auto obstacle = obstacles.Forward(future_time_sec,
+                                            future_car_s,
+                                            lane,
+                                            30);
           if (obstacle) {
             if (lane < 2) {
-              auto right_obstacle = obstacles.Forward(future_time_sec, car_s, lane + 1, 30);
+              auto right_obstacle = obstacles.Forward(future_time_sec,
+                                                      future_car_s,
+                                                      lane + 1,
+                                                      30);
               if (right_obstacle) {
                 ref_vel = obstacle->velocity_mph();
               } else {
@@ -127,7 +129,10 @@ int main() {
                 lane = lane + 1;
               }
             } else if (lane > 0) {
-              auto left_obstacle = obstacles.Forward(future_time_sec, car_s, lane - 1, 30);
+              auto left_obstacle = obstacles.Forward(future_time_sec,
+                                                     future_car_s,
+                                                     lane - 1,
+                                                     30);
               if (left_obstacle) {
                 ref_vel = obstacle->velocity_mph();
               } else {
