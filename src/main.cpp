@@ -115,13 +115,13 @@ int main() {
           auto obstacle = obstacles.Forward(future_time_sec,
                                             future_car_s,
                                             lane,
-                                            30);
+                                            50);
           if (obstacle) {
             if (lane < 2) {
               auto right_obstacle = obstacles.Forward(future_time_sec,
                                                       future_car_s,
                                                       lane + 1,
-                                                      30);
+                                                      50);
               if (right_obstacle) {
                 ref_vel = obstacle->velocity_mph();
               } else {
@@ -132,7 +132,7 @@ int main() {
               auto left_obstacle = obstacles.Forward(future_time_sec,
                                                      future_car_s,
                                                      lane - 1,
-                                                     30);
+                                                     50);
               if (left_obstacle) {
                 ref_vel = obstacle->velocity_mph();
               } else {
@@ -145,57 +145,6 @@ int main() {
           } else {
             ref_vel = 45.0;
           }
-
-          /*
-
-          bool too_close = false;
-
-          for (const auto& id_xy_vxy_sd : sensor_fusion) {
-            const int id = id_xy_vxy_sd[0];
-            const double x = id_xy_vxy_sd[1];
-            const double y = id_xy_vxy_sd[2];
-            const double vx = id_xy_vxy_sd[3];
-            const double vy = id_xy_vxy_sd[4];
-            const double s = id_xy_vxy_sd[5];
-            const double d = id_xy_vxy_sd[6];
-
-            if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
-              const double check_speed = std::sqrt(vx*vx + vy*vy);
-
-              const double check_car_s =
-                s + static_cast<double>(prev_size) * .02 * check_speed;
-
-              if (check_car_s > car_s &&check_car_s - car_s < 30) {
-                too_close = true;
-
-                if (lane > 0) {
-                  lane = 0;
-                }
-                break;
-              }
-            }
-
-            // std::cout << "id = " << id << "\n";
-            // std::cout << "x = " << x << "\n";
-            // std::cout << "y = " << y << "\n";
-            // std::cout << "vx = " << vx << "\n";
-            // std::cout << "vy = " << vy << "\n";
-            // std::cout << "s = " << s << "\n";
-            // std::cout << "d = " << d << "\n\n";
-          }
-
-          if (too_close && ref_vel > 0.224) {
-            ref_vel -= 0.224;
-          } else if (ref_vel < 45.0) {
-            ref_vel += 0.224;
-          }
-          */
-
-          /*if (too_close) {
-            ref_vel = 29.5;
-          } else {
-            ref_vel = 45.0;
-          }*/
 
           double car_yaw_rad = deg2rad(car_yaw_deg);
 
