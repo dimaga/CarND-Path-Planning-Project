@@ -14,43 +14,60 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
 
   const double recent_time_sec = pTrajectory->recent_time_sec();
 
+  Config& config = last_config_;
+
   auto obstacle = obstacles.Forward(recent_time_sec,
                                     recent_frenet[0],
-                                    lane_,
+                                    config.lane_,
                                     50);
 
   if (obstacle) {
-    if (lane_ < 2) {
+    if (config.lane_ < 2) {
       auto right_obstacle = obstacles.Forward(recent_time_sec,
                                               recent_frenet[0],
-                                              lane_ + 1,
+                                              config.lane_ + 1,
                                               50);
       if (right_obstacle) {
-        ref_vel_ = obstacle->velocity_mph();
+        config.ref_vel_ = obstacle->velocity_mph();
       } else {
-        ref_vel_ = 45.0;
-        ++lane_;
+        config.ref_vel_ = 45.0;
+        ++config.lane_;
       }
-    } else if (lane_ > 0) {
+    } else if (config.lane_ > 0) {
       auto left_obstacle = obstacles.Forward(recent_time_sec,
                                              recent_frenet[0],
-                                             lane_ - 1,
+                                             config.lane_ - 1,
                                              50);
       if (left_obstacle) {
-        ref_vel_ = obstacle->velocity_mph();
+        config.ref_vel_ = obstacle->velocity_mph();
       } else {
-        ref_vel_ = 45.0;
-        --lane_;
+        config.ref_vel_ = 45.0;
+        --config.lane_;
       }
     } else {
-      ref_vel_ = obstacle->velocity_mph();
+      config.ref_vel_ = obstacle->velocity_mph();
     }
+  } else {
+    config.ref_vel_ = 45.0;
   }
 
-  const double dest_d = IMap::kLaneW * (lane_ + 0.5);
-  const auto xy0 = map_.ToCartesian({recent_frenet[0] + 30, dest_d});
-  const auto xy1 = map_.ToCartesian({recent_frenet[0] + 60, dest_d});
-  const auto xy2 = map_.ToCartesian({recent_frenet[0] + 90, dest_d});
+  Trace(recent_frenet[0], config, pTrajectory);
+}
 
-  pTrajectory->Trace(ref_vel_, {xy0, xy1, xy2});
+
+double Planner::cost(const IObstacles& obstacles,
+                     const ITrajectory& trajectory) const {
+  return 0.0;
+}
+
+
+void Planner::Trace(double recent_frenet_s,
+                      const Planner::Config& config,
+                      ITrajectory* pTrajectory) const {
+  const double dest_d = IMap::kLaneW * (config.lane_ + 0.5);
+  const auto xy0 = map_.ToCartesian({recent_frenet_s + 30, dest_d});
+  const auto xy1 = map_.ToCartesian({recent_frenet_s + 60, dest_d});
+  const auto xy2 = map_.ToCartesian({recent_frenet_s + 90, dest_d});
+
+  pTrajectory->Trace(config.ref_vel_, {xy0, xy1, xy2});
 }

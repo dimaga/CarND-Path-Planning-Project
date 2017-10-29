@@ -11,7 +11,6 @@
 #include "Map.h"
 #include "Trajectory.h"
 #include "Obstacles.h"
-#include "Costs.h"
 #include "Planner.h"
 
 // for convenience
@@ -50,8 +49,7 @@ int main() {
   const Map map{in_map_};
   Trajectory trajectory;
   Obstacles obstacles(map);
-  Costs costs;
-  Planner planner(map, costs);
+  Planner planner(map);
 
   h.onMessage([&trajectory,
                &obstacles,
