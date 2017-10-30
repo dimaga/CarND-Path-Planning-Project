@@ -108,25 +108,63 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
   }
 
   SECTION("IsCollided") {
-    std::vector<double> path_x;
-    std::vector<double> path_y;
-
-    double kVel = 5;
+    double vel = 5;
     bool expected = false;
 
     SECTION("Intersecting path") {
       expected = true;
-      kVel = 15;
+      vel = 15;
     }
 
-    const double angle_step = kVel * ITrajectory::kDtInSeconds / kInnerRadius;
+    const double angle_step = vel * ITrajectory::kDtInSeconds / kInnerRadius;
     const double angle_offset = M_PI - Obstacles::kLength / kInnerRadius * 1.01;
 
+    std::vector<double> path_x;
+    std::vector<double> path_y;
     for (int i = 0; i < 100; ++i) {
       path_x.push_back(kInnerRadius * std::cos(i * angle_step + angle_offset));
       path_y.push_back(kInnerRadius * std::sin(i * angle_step + angle_offset));
     }
 
     REQUIRE(expected == obstacles.IsCollided(path_x, path_y));
+  }
+
+  SECTION("min_distance") {
+    SECTION("crossing the obstacle") {
+      const double obstacle_x = -10.0 * ITrajectory::kDtInSeconds;
+      const double obstacle_y = kInnerRadius + 0.5 * IMap::kLaneW;
+
+      std::vector<double> path_x = {obstacle_x, obstacle_x + 0.1};
+      std::vector<double> path_y = {obstacle_y, obstacle_y - 0.1};
+      REQUIRE(Approx(0.0).epsilon(1e-3) ==
+              obstacles.min_distance(path_x, path_y));
+    }
+
+    SECTION("distance comparison") {
+      const double angle_step = 20 * ITrajectory::kDtInSeconds / kInnerRadius;
+      const double angle_offset = -0.001;
+
+      std::vector<double> far_x;
+      std::vector<double> far_y;
+      std::vector<double> near_x;
+      std::vector<double> near_y;
+
+      const double kFarR = kInnerRadius + 1.0 * IMap::kLaneW;
+      const double kNearR = kInnerRadius + 0.4 * IMap::kLaneW;
+
+      for (int i = 0; i < 100; ++i) {
+        const double cos_a = std::cos(i * angle_step + angle_offset);
+        const double sin_a = std::sin(i * angle_step + angle_offset);
+
+        far_x.push_back(kFarR * cos_a);
+        far_y.push_back(kFarR * sin_a);
+
+        near_x.push_back(kNearR * cos_a);
+        near_y.push_back(kNearR * sin_a);
+      }
+
+      REQUIRE(obstacles.min_distance(near_x, near_y) <
+              obstacles.min_distance(far_x, far_y));
+    }
   }
 }
