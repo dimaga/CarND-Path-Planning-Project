@@ -2,6 +2,7 @@
 #include <limits>
 #include <cassert>
 
+
 Obstacles::Obstacles(const IMap& map)
   : map_(map) {
 }
@@ -70,7 +71,6 @@ bool Obstacles::IsCollided(const std::vector<double>& path_x,
                            const std::vector<double>& path_y) const {
   assert(path_x.size() == path_y.size());
 
-
   for (std::size_t i = 0, sz = path_x.size(); i < sz; ++i) {
     const double t = i * ITrajectory::kDtInSeconds;
 
@@ -81,10 +81,12 @@ bool Obstacles::IsCollided(const std::vector<double>& path_x,
       const double forward_speed = obstacle.frenet_vel_[0];
 
       const Vector2d f { obstacle.frenet_[0] + forward_speed * t,
-        obstacle.frenet_[1] };
+                         obstacle.frenet_[1] };
 
-      if (std::abs(f.x() - v.x()) < kLength &&
-          std::abs(f.y() - v.y()) < kWidth) {
+      const Vector2d diff = DiffFrenet(v, f);
+
+      using std::abs;
+      if (abs(diff[0]) < kLength && abs(diff[1]) < kWidth) {
         return true;
       }
     }
@@ -112,15 +114,18 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
       const Vector2d f { obstacle.frenet_[0] + forward_speed * t,
                          obstacle.frenet_[1] };
 
-      if (std::abs(v[1] - f[1]) > kWidth) {
+      const Vector2d diff = DiffFrenet(v, f);
+      using std::abs;
+
+      if (abs(diff[1]) > kWidth) {
         continue;
       }
 
-      if (std::abs(v[0] - f[0]) > 3 * kLength) {
+      if (abs(diff[0]) > 3 * kLength) {
         continue;
       }
 
-      const double dist = (f - v).norm();
+      const double dist = diff.norm();
       if (dist < result) {
         result = dist;
       }
@@ -128,4 +133,22 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
   }
 
   return result;
+}
+
+
+Eigen::Vector2d Obstacles::DiffFrenet(const Eigen::Vector2d& v1,
+                                      const Eigen::Vector2d& v2) const {
+  const double track_length = map_.length();
+  const double half_track_length = track_length * 0.5;
+
+  double ds = std::fmod(v1[0] - v2[0], track_length);
+  if (ds < -half_track_length) {
+    ds += track_length;
+  } else if (ds > half_track_length) {
+    ds -= track_length;
+  }
+
+  const double dd = v1[1] - v2[1];
+
+  return {ds, dd};
 }

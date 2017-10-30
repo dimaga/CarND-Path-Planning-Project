@@ -28,6 +28,9 @@ class Obstacles final : public IObstacles {
  private:
   const IMap& map_;
   std::vector<Obstacle> obstacles_;
+
+  Eigen::Vector2d DiffFrenet(const Eigen::Vector2d& v1,
+                             const Eigen::Vector2d& v2) const;
 };
 
 #endif  // SRC_OBSTACLES_H_

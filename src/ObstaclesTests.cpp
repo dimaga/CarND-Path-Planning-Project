@@ -166,5 +166,18 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
       REQUIRE(obstacles.min_distance(near_x, near_y) <
               obstacles.min_distance(far_x, far_y));
     }
+
+    SECTION("angle wrap up for collisions") {
+      std::vector<double> path_x;
+      std::vector<double> path_y;
+
+      const double kR = kInnerRadius + 0.5 * IMap::kLaneW;
+
+      path_x.push_back(kR * std::cos(-0.001));
+      path_y.push_back(kR * std::sin(-0.001));
+
+      REQUIRE(true == obstacles.IsCollided(path_x, path_y));
+      REQUIRE(1.0 > obstacles.min_distance(path_x, path_y));
+    }
   }
 }
