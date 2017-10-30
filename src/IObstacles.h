@@ -28,6 +28,9 @@ class IObstacles {
 
   virtual bool IsCollided(const std::vector<double>& path_x,
                           const std::vector<double>& path_y) const = 0;
+
+  virtual double min_distance(const std::vector<double>& path_x,
+                              const std::vector<double>& path_y) const = 0;
 };
 
 #endif  // SRC_IOBSTACLES_H_

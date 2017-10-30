@@ -22,6 +22,9 @@ class Obstacles final : public IObstacles {
   bool IsCollided(const std::vector<double>& path_x,
                   const std::vector<double>& path_y) const override;
 
+  double min_distance(const std::vector<double>& path_x,
+                      const std::vector<double>& path_y) const override;
+
  private:
   const IMap& map_;
   std::vector<Obstacle> obstacles_;

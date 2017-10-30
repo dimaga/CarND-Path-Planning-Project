@@ -67,11 +67,6 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
   for (const auto& config : configs) {
     Trace(recent_frenet_s, config, pTrajectory);
     const double cost = EstimateCost(obstacles, *pTrajectory);
-    if (cost > 1) {
-      std::cout << "config.lane_ = " << config.lane_ << "\n";
-      std::cout << "config.ref_vel_ = " << config.ref_vel_ << "\n";
-      std::cout << "may be collision" << "\n\n";
-    }
 
     if (cost < min_cost) {
       min_cost = cost;
@@ -79,21 +74,20 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
     }
   }
 
-  std::cout << "last_config_.lane_ = " << last_config_.lane_ << "\n";
-  std::cout << "last_config_.ref_vel_ = " << last_config_.ref_vel_ << "\n";
-  std::cout << "min_cost = " << min_cost << "\n\n\n";
-
   Trace(recent_frenet_s, last_config_, pTrajectory);
 }
 
 
 double Planner::EstimateCost(const IObstacles& obstacles,
                              const ITrajectory& trajectory) const {
-  if (obstacles.IsCollided(trajectory.path_x(), trajectory.path_y())) {
+  const auto& path_x = trajectory.path_x();
+  const auto& path_y = trajectory.path_y();
+
+  if (obstacles.IsCollided(path_x, path_y)) {
     return std::numeric_limits<double>::max();
   }
 
-  return 0.0;
+  return 1.0 / (1.0 + obstacles.min_distance(path_x, path_y));
 }
 
 
