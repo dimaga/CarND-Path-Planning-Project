@@ -83,7 +83,7 @@ bool Obstacles::IsCollided(const std::vector<double>& path_x,
       const Vector2d f { obstacle.frenet_[0] + forward_speed * t,
                          obstacle.frenet_[1] };
 
-      const Vector2d diff = DiffFrenet(v, f);
+      const Vector2d diff = map_.DiffFrenet(v, f);
 
       using std::abs;
       if (abs(diff[0]) < kLength && abs(diff[1]) < kWidth) {
@@ -114,7 +114,7 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
       const Vector2d f { obstacle.frenet_[0] + forward_speed * t,
                          obstacle.frenet_[1] };
 
-      const Vector2d diff = DiffFrenet(v, f);
+      const Vector2d diff = map_.DiffFrenet(v, f);
       using std::abs;
 
       if (abs(diff[1]) > kWidth) {
@@ -133,22 +133,4 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
   }
 
   return result;
-}
-
-
-Eigen::Vector2d Obstacles::DiffFrenet(const Eigen::Vector2d& v1,
-                                      const Eigen::Vector2d& v2) const {
-  const double track_length = map_.length();
-  const double half_track_length = track_length * 0.5;
-
-  double ds = std::fmod(v1[0] - v2[0], track_length);
-  if (ds < -half_track_length) {
-    ds += track_length;
-  } else if (ds > half_track_length) {
-    ds -= track_length;
-  }
-
-  const double dd = v1[1] - v2[1];
-
-  return {ds, dd};
 }

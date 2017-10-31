@@ -115,4 +115,28 @@ TEST_CASE("Map unit tests", "[map]") {
       REQUIRE(Approx(10.0) == cartesian[1]);
     }
   }
+
+  SECTION("DiffFrenet") {
+    SECTION("normal") {
+      const Vector2d v0 {6.0, -11.0};
+      const Vector2d v1 {21.0, 1.0};
+      const Vector2d f0 = map.ToFrenet(v0);
+      const Vector2d f1 = map.ToFrenet(v1);
+      const Vector2d diff_frenet = map.DiffFrenet(f1, f0);
+      const Vector2d diff_cartesian = map.ToFrenetVel(v0, v1 - v0);
+      REQUIRE(Approx(diff_frenet.x()) == diff_cartesian.x());
+      REQUIRE(Approx(diff_frenet.y()) == diff_cartesian.y());
+    }
+
+    SECTION("wrap around") {
+      const Vector2d v0 {-5.0, -10.0};
+      const Vector2d v1 {-20.0, 1.0};
+      const Vector2d f0 = map.ToFrenet(v0);
+      const Vector2d f1 = map.ToFrenet(v1);
+      const Vector2d diff_frenet = map.DiffFrenet(f1, f0);
+      const Vector2d diff_cartesian = map.ToFrenetVel(v0, v1 - v0);
+      REQUIRE(Approx(diff_frenet.x()) == diff_cartesian.x());
+      REQUIRE(Approx(diff_frenet.y()) == diff_cartesian.y());
+    }
+  }
 }
