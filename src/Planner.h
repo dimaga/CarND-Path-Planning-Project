@@ -30,7 +30,8 @@ class Planner final {
 
   void Trace(double recent_frenet_s,
              const Config& config,
-             ITrajectory* pTrajectory) const;
+             ITrajectory* pTrajectory,
+             std::size_t samples) const;
 };
 
 #endif  // SRC_PLANNER_H_

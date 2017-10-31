@@ -100,7 +100,7 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
                                const std::vector<double>& path_y) const {
   assert(path_x.size() == path_y.size());
 
-  double result = 10.0;
+  double result = 100.0;
 
   for (std::size_t i = 0, sz = path_x.size(); i < sz; ++i) {
     const double t = (i + 1) * ITrajectory::kDtInSeconds;
@@ -121,7 +121,7 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
         continue;
       }
 
-      if (abs(diff[0]) > 3 * kLength) {
+      if (abs(diff[0]) > 4 * kLength) {
         continue;
       }
 

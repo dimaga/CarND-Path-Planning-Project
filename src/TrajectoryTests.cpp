@@ -24,7 +24,7 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
       REQUIRE(Approx(initial_pos_y) == trajectory.recent_cartesian().y());
     }
 
-    trajectory.Trace(final_speed_mph, {{pos_x, final_pos_y}});
+    trajectory.Trace(final_speed_mph, {{pos_x, final_pos_y}}, 30);
 
     {
       const auto& path_x = trajectory.path_x();
@@ -100,7 +100,8 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
       trajectory.Trace(speed_mph,
                       {{r * cos(-M_PI / 4), r * sin(-M_PI / 4)},
                        {r * cos(-M_PI / 8), r * sin(-M_PI / 8)},
-                       {r * cos(0), r * sin(0)}});
+                       {r * cos(0), r * sin(0)}},
+                       40);
 
       const auto& path_x = trajectory.path_x();
       const auto& path_y = trajectory.path_y();

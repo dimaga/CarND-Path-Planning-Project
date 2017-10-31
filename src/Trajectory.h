@@ -16,7 +16,8 @@ class Trajectory final : public ITrajectory {
                          const std::vector<double>& path_y) override;
 
   void Trace(double target_speed_mph,
-             std::initializer_list<Eigen::Vector2d> target_poses) override;
+             std::initializer_list<Eigen::Vector2d> target_poses,
+             std::size_t samples) override;
 
   const std::vector<double>& path_x() const override;
   const std::vector<double>& path_y() const override;

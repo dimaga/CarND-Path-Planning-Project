@@ -65,7 +65,7 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
   double min_cost = std::numeric_limits<double>::max();
 
   for (const auto& config : configs) {
-    Trace(recent_frenet_s, config, pTrajectory);
+    Trace(recent_frenet_s, config, pTrajectory, 60);
     const double cost = EstimateCost(obstacles, *pTrajectory);
 
     if (cost < min_cost) {
@@ -74,7 +74,7 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
     }
   }
 
-  Trace(recent_frenet_s, last_config_, pTrajectory);
+  Trace(recent_frenet_s, last_config_, pTrajectory, 40);
 }
 
 
@@ -93,11 +93,12 @@ double Planner::EstimateCost(const IObstacles& obstacles,
 
 void Planner::Trace(double recent_frenet_s,
                     const Planner::Config& config,
-                    ITrajectory* pTrajectory) const {
+                    ITrajectory* pTrajectory,
+                    std::size_t samples) const {
   const double dest_d = IMap::kLaneW * (config.lane_ + 0.5);
   const auto xy0 = map_.ToCartesian({recent_frenet_s + 30, dest_d});
   const auto xy1 = map_.ToCartesian({recent_frenet_s + 60, dest_d});
   const auto xy2 = map_.ToCartesian({recent_frenet_s + 90, dest_d});
 
-  pTrajectory->Trace(config.ref_vel_, {xy0, xy1, xy2});
+  pTrajectory->Trace(config.ref_vel_, {xy0, xy1, xy2}, samples);
 }

@@ -23,7 +23,8 @@ class ITrajectory {
                                  const std::vector<double>& path_y) = 0;
 
   virtual void Trace(double target_speed_mph,
-                     std::initializer_list<Eigen::Vector2d> target_poses) = 0;
+                     std::initializer_list<Eigen::Vector2d> target_poses,
+                     std::size_t samples) = 0;
 
   virtual const std::vector<double>& path_x() const = 0;
   virtual const std::vector<double>& path_y() const = 0;

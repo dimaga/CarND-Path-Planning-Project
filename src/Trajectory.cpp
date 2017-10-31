@@ -42,7 +42,8 @@ void Trajectory::set_previous_path(const std::vector<double>& path_x,
 
 
 void Trajectory::Trace(double target_speed_mph,
-                       std::initializer_list<Eigen::Vector2d> target_poses) {
+                       std::initializer_list<Eigen::Vector2d> target_poses,
+                       std::size_t samples) {
   path_x_.clear();
   path_y_.clear();
 
@@ -125,7 +126,9 @@ void Trajectory::Trace(double target_speed_mph,
   const double total_time = last_spline_x / avg_speed;
   const double accel = (target_speed - ref_speed) / total_time;
 
-  for (std::size_t prev_i = previous_path_x_.size(); prev_i < 50; ++prev_i) {
+  for (std::size_t prev_i = previous_path_x_.size();
+       prev_i < samples;
+       ++prev_i) {
     const std::size_t i = prev_i - previous_path_x_.size();
     const double time_elapsed_sec = i * kDtInSeconds;
 
