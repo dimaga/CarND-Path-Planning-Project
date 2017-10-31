@@ -19,6 +19,9 @@ class ITrajectory {
   virtual double recent_time_sec() const = 0;
   virtual Eigen::Vector2d recent_cartesian() const = 0;
 
+  virtual double avg_speed() const = 0;
+  virtual double avg_jerk() const = 0;
+
   virtual void set_previous_path(const std::vector<double>& path_x,
                                  const std::vector<double>& path_y) = 0;
 

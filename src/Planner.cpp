@@ -65,7 +65,7 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
   double min_cost = std::numeric_limits<double>::max();
 
   for (const auto& config : configs) {
-    Trace(recent_frenet_s, config, pTrajectory, 60);
+    Trace(recent_frenet_s, config, pTrajectory, 100);
     const double cost = EstimateCost(obstacles, *pTrajectory);
 
     if (cost < min_cost) {
@@ -74,12 +74,20 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
     }
   }
 
-  Trace(recent_frenet_s, last_config_, pTrajectory, 40);
+  Trace(recent_frenet_s, last_config_, pTrajectory, 50);
 }
 
 
 double Planner::EstimateCost(const IObstacles& obstacles,
                              const ITrajectory& trajectory) const {
+  if (std::abs(trajectory.avg_speed()) > 45.0) {
+    return std::numeric_limits<double>::max();
+  }
+
+  if (std::abs(trajectory.avg_jerk()) > 3.0) {
+    return std::numeric_limits<double>::max();
+  }
+
   const auto& path_x = trajectory.path_x();
   const auto& path_y = trajectory.path_y();
 

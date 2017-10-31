@@ -168,3 +168,63 @@ const std::vector<double>& Trajectory::path_x() const {
 const std::vector<double>& Trajectory::path_y() const {
   return path_y_;
 }
+
+
+double Trajectory::avg_speed() const {
+  assert(path_x_.size() == path_y_.size());
+  double sum = 0.0;
+  int count = 0.0;
+
+  const double kDiff2Mph = 1.0 / (kDtInSeconds * kMilesPerHour2MetersPerSecond);
+
+  for (std::size_t i = 1, sz = path_x_.size(); i < sz; ++i) {
+    using Eigen::Vector2d;
+
+    const Vector2d p0 { path_x_.at(i - 1), path_y_.at(i - 1) };
+    const Vector2d p1 { path_x_.at(i), path_y_.at(i) };
+
+    const double speed_mph = (p1 - p0).norm() * kDiff2Mph;
+    sum += speed_mph;
+    ++count;
+  }
+
+  if (0 == count) {
+    return 0;
+  }
+
+  return sum / count;
+}
+
+
+double Trajectory::avg_jerk() const {
+  assert(path_x_.size() == path_y_.size());
+  double sum = 0.0;
+  int count = 0.0;
+
+  const double kInvDts = 1.0 / kDtInSeconds;
+
+  for (std::size_t i = 3, sz = path_x_.size(); i < sz; ++i) {
+    using Eigen::Vector2d;
+
+    const Vector2d p0 { path_x_.at(i - 3), path_y_.at(i - 3) };
+    const Vector2d p1 { path_x_.at(i - 2), path_y_.at(i - 2) };
+    const Vector2d p2 { path_x_.at(i - 1), path_y_.at(i - 1) };
+    const Vector2d p3 { path_x_.at(i), path_y_.at(i) };
+
+    const Vector2d v01 = (p1 - p0) * kInvDts;
+    const Vector2d v12 = (p2 - p1) * kInvDts;
+    const Vector2d v23 = (p3 - p2) * kInvDts;
+
+    const Vector2d a02 = (v12 - v01) * kInvDts;
+    const Vector2d a13 = (v23 - v12) * kInvDts;
+
+    sum += (a13 - a02).norm() * kInvDts;
+    ++count;
+  }
+
+  if (0 == count) {
+    return 0;
+  }
+
+  return sum / count;
+}

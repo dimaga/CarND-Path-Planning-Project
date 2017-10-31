@@ -140,6 +140,8 @@ TEST_CASE("Trajectory unit tests", "[trajectory]") {
         CAPTURE(dy);
         REQUIRE(Approx(r).epsilon(1e-2) == std::sqrt(x * x + y * y));
       }
+
+      REQUIRE(Approx(speed_mph) == trajectory.avg_speed());
     }
   }
 }
