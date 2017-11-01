@@ -19,9 +19,6 @@ class Obstacles final : public IObstacles {
                           int lane,
                           double range) const override;
 
-  bool IsCollided(const std::vector<double>& path_x,
-                  const std::vector<double>& path_y) const override;
-
   double min_distance(const std::vector<double>& path_x,
                       const std::vector<double>& path_y) const override;
 

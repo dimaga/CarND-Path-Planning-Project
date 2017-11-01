@@ -20,7 +20,8 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
 
   std::vector<Config> configs;
   configs.push_back(last_config_);
-  configs.emplace_back(last_config_.lane_, last_config_.ref_vel_ * 2.0);
+  configs.emplace_back(last_config_.lane_,
+                       std::min(45.0, last_config_.ref_vel_ * 2.0));
   configs.emplace_back(last_config_.lane_, last_config_.ref_vel_ * 0.5);
   configs.emplace_back(last_config_.lane_, 0.1);
 
@@ -63,10 +64,14 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
   }
 
   double min_cost = std::numeric_limits<double>::max();
+  const Config prev_config = last_config_;
 
   for (const auto& config : configs) {
-    Trace(recent_frenet_s, config, pTrajectory, 100);
-    const double cost = EstimateCost(obstacles, *pTrajectory);
+    Trace(recent_frenet_s, config, pTrajectory, 70);
+    const double cost = EstimateCost(obstacles,
+                                     *pTrajectory,
+                                     prev_config,
+                                     config);
 
     if (cost < min_cost) {
       min_cost = cost;
@@ -79,23 +84,20 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
 
 
 double Planner::EstimateCost(const IObstacles& obstacles,
-                             const ITrajectory& trajectory) const {
-  if (std::abs(trajectory.avg_speed()) > 45.0) {
-    return std::numeric_limits<double>::max();
-  }
-
-  if (std::abs(trajectory.avg_jerk()) > 3.0) {
-    return std::numeric_limits<double>::max();
-  }
-
+                             const ITrajectory& trajectory,
+                             const Config& prev_config,
+                             const Config& config) const {
   const auto& path_x = trajectory.path_x();
   const auto& path_y = trajectory.path_y();
 
-  if (obstacles.IsCollided(path_x, path_y)) {
-    return std::numeric_limits<double>::max();
+  double cost = 1e3 * std::exp(-obstacles.min_distance(path_x, path_y));
+  cost += 1e3 * std::exp(-trajectory.avg_speed());
+
+  if (prev_config.lane_ != config.lane_) {
+    cost += 1e-6;
   }
 
-  return 1.0 / (1.0 + obstacles.min_distance(path_x, path_y));
+  return cost;
 }
 
 

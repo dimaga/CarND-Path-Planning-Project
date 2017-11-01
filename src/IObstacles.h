@@ -10,7 +10,6 @@ class IObstacles {
   virtual ~IObstacles() = default;
 
   static constexpr double kLength = 5.0;
-  static constexpr double kWidth = 3.0;
 
   struct Obstacle {
     Eigen::Vector2d frenet_;
@@ -25,9 +24,6 @@ class IObstacles {
                                   double future_ego_s,
                                   int lane,
                                   double range) const = 0;
-
-  virtual bool IsCollided(const std::vector<double>& path_x,
-                          const std::vector<double>& path_y) const = 0;
 
   virtual double min_distance(const std::vector<double>& path_x,
                               const std::vector<double>& path_y) const = 0;

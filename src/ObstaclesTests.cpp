@@ -107,28 +107,6 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
     }
   }
 
-  SECTION("IsCollided") {
-    double vel = 5;
-    bool expected = false;
-
-    SECTION("Intersecting path") {
-      expected = true;
-      vel = 15;
-    }
-
-    const double angle_step = vel * ITrajectory::kDtInSeconds / kInnerRadius;
-    const double angle_offset = M_PI - Obstacles::kLength / kInnerRadius * 1.01;
-
-    std::vector<double> path_x;
-    std::vector<double> path_y;
-    for (int i = 0; i < 100; ++i) {
-      path_x.push_back(kInnerRadius * std::cos(i * angle_step + angle_offset));
-      path_y.push_back(kInnerRadius * std::sin(i * angle_step + angle_offset));
-    }
-
-    REQUIRE(expected == obstacles.IsCollided(path_x, path_y));
-  }
-
   SECTION("min_distance") {
     SECTION("crossing the obstacle") {
       const double obstacle_x = -10.0 * ITrajectory::kDtInSeconds;
@@ -176,7 +154,6 @@ TEST_CASE("Obstacles unit tests", "[obstacles]") {
       path_x.push_back(kR * std::cos(-0.001));
       path_y.push_back(kR * std::sin(-0.001));
 
-      REQUIRE(true == obstacles.IsCollided(path_x, path_y));
       REQUIRE(1.0 > obstacles.min_distance(path_x, path_y));
     }
   }

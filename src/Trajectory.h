@@ -20,7 +20,6 @@ class Trajectory final : public ITrajectory {
              std::size_t samples) override;
 
   double avg_speed() const override;
-  double avg_jerk() const override;
 
   const std::vector<double>& path_x() const override;
   const std::vector<double>& path_y() const override;

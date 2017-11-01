@@ -26,7 +26,9 @@ class Planner final {
   Config last_config_{1, 45.0};
 
   double EstimateCost(const IObstacles& obstacles,
-                      const ITrajectory& trajectory) const;
+                      const ITrajectory& trajectory,
+                      const Config& prev_config,
+                      const Config& config) const;
 
   void Trace(double recent_frenet_s,
              const Config& config,
