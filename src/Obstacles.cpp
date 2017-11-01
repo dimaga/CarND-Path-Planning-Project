@@ -92,7 +92,7 @@ double Obstacles::min_distance(const std::vector<double>& path_x,
         continue;
       }
 
-      if (abs(diff[0]) > 3 * kLength) {
+      if (abs(diff[0]) > 3.5 * kLength) {
         continue;
       }
 

@@ -48,6 +48,10 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
     } else {
       configs.emplace_back(last_config_.lane_ + 1, kMaxVelocityMph);
     }
+
+    configs.emplace_back(last_config_.lane_ + 1,
+                         std::min(45.0, last_config_.ref_vel_ * 2.0));
+    configs.emplace_back(last_config_.lane_ + 1, last_config_.ref_vel_ * 0.5);
   }
 
   if (last_config_.lane_ > 0) {
@@ -61,6 +65,10 @@ void Planner::Plan(const IObstacles& obstacles, ITrajectory* pTrajectory) {
     } else {
       configs.emplace_back(last_config_.lane_ - 1, kMaxVelocityMph);
     }
+
+    configs.emplace_back(last_config_.lane_ - 1,
+                         std::min(45.0, last_config_.ref_vel_ * 2.0));
+    configs.emplace_back(last_config_.lane_ - 1, last_config_.ref_vel_ * 0.5);
   }
 
   double min_cost = std::numeric_limits<double>::max();
@@ -90,11 +98,11 @@ double Planner::EstimateCost(const IObstacles& obstacles,
   const auto& path_x = trajectory.path_x();
   const auto& path_y = trajectory.path_y();
 
-  double cost = 1e3 * std::exp(-obstacles.min_distance(path_x, path_y));
+  double cost = 1e5 * std::exp(-obstacles.min_distance(path_x, path_y));
   cost += 1e3 * std::exp(-trajectory.avg_speed());
 
   if (prev_config.lane_ != config.lane_) {
-    cost += 1e-6;
+    cost += 1e-4;
   }
 
   return cost;
